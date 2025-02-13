@@ -5,3 +5,7 @@ members = [
     "fe680",
     "fe630"
 ]
+resolver = "2"
+
+[workspace.dependencies]
+polars = { version = "0.46", features = ["lazy", "dtype-full"] }
