@@ -9,3 +9,4 @@ resolver = "2"
 
 [workspace.dependencies]
 polars = { version = "0.46", features = ["lazy", "dtype-full"] }
+cubic_spline = { version = "1" }

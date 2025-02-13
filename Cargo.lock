@@ -351,6 +351,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "cubic_spline"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "38c63da2494d1333c977518cc40874f5ea0361538163355993544c1e4115abf3"
+dependencies = [
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "dyn-clone"
 version = "1.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -424,6 +433,7 @@ version = "0.1.0"
 name = "fe680"
 version = "0.1.0"
 dependencies = [
+ "cubic_spline",
  "polars",
 ]
 
