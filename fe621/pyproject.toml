@@ -9,6 +9,7 @@ dependencies = [
     "blpapi>=3.25.1",
     "ipykernel>=6.29.5",
     "pandas>=2.2.3",
+    "yfinance>=0.2.52",
 ]
 
 [tool.uv.sources]
