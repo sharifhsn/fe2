@@ -1,5 +1,4 @@
-use core::time;
-use std::arch::x86_64;
+
 
 use polars::prelude::*;
 
@@ -66,22 +65,17 @@ use polars::prelude::*;
 //     panic!("x is out of bounds");
 // }
 
-use cubic_spline::{Points, Point, SplineOpts, TryFrom};
+// use cubic_spline::{Points, Point, SplineOpts, TryFrom};
 pub fn a() {
-    let time_to_maturity = vec![0.25, 0.5, 1.0, 2.0, 3.0, 5.0, 7.0, 10.0, 20.0];
-    let yield_rate = vec![0.0150, 0.0160, 0.0180, 0.0210, 0.0240, 0.0330, 0.03740, 0.0405, 0.0435];
+    // let time_to_maturity = vec![0.25, 0.5, 1.0, 2.0, 3.0, 5.0, 7.0, 10.0, 20.0];
+    // let yield_rate = vec![0.0150, 0.0160, 0.0180, 0.0210, 0.0240, 0.0330, 0.03740, 0.0405, 0.0435];
 
-    let src: Vec<(f64, f64)> = time_to_maturity.into_iter().zip(yield_rate).collect();
-    let opts = SplineOpts::new();
+    // let (b, c, d, a) = compute_splines();
 
-    let mut points = <Points as cubic_spline::TryFrom>::try_from(&src).unwrap();
-
-
-    let (b, c, d, a) = compute_splines();
-
-    let interpolation_points = vec![0.75, 1.5, 2.5, 4.0, 6.0, 8.0, 15.0];
-    for &point in &interpolation_points {
-        let interpolated_yield = interpolate_yield_curve(point, &X, &b, &c, &d);
-        println!("Time to Maturity: {:.2}, Interpolated Yield Rate: {:.4}", point, interpolated_yield);
-    }
+    // let interpolation_points = vec![0.75, 1.5, 2.5, 4.0, 6.0, 8.0, 15.0];
+    // for &point in &interpolation_points {
+    //     let interpolated_yield = interpolate_yield_curve(point, &X, &b, &c, &d);
+    //     println!("Time to Maturity: {:.2}, Interpolated Yield Rate: {:.4}", point, interpolated_yield);
+    // }
+    todo!()
 }
