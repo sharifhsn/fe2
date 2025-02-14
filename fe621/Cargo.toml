@@ -4,3 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+tokio = { version = "1.43.0", features = ["full"] }
+yahoo_finance_api = "3.0.0"
+polars = { workspace = true }
+plotly = "0.12.1"
