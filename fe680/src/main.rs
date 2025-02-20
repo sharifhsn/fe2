@@ -1,4 +1,4 @@
-use fe680::assn1::prob1::a;
+use fe680::assn1::prob2::a;
 
 fn main() {
     let _ = a().unwrap();

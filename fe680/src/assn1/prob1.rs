@@ -94,16 +94,8 @@ const BP: f64 = 0.0001;
 pub fn dv01(lf: &LazyFrame) -> PolarsResult<f64> {
     let df = lf
         .clone()
-        .with_column(
-            (lit(1.0) / (lit(1.0) + col("forward_curve") + lit(BP)))
-                .cum_prod(false)
-                .alias("discount_curve_up"),
-        )
-        .with_column(
-            (lit(1.0) / (lit(1.0) + col("forward_curve") - lit(BP)))
-                .cum_prod(false)
-                .alias("discount_curve_down"),
-        )
+        .with_column((col("discount_curve_shifted") / lit(1.0 + BP)).alias("discount_curve_up"))
+        .with_column((col("discount_curve_shifted") * lit(1.0 + BP)).alias("discount_curve_down"))
         .with_column(
             (col("discount_curve_up") * col("bond_cash_flow")).alias("pv_bond_cash_flow_up"),
         )
@@ -111,10 +103,39 @@ pub fn dv01(lf: &LazyFrame) -> PolarsResult<f64> {
             (col("discount_curve_down") * col("bond_cash_flow")).alias("pv_bond_cash_flow_down"),
         )
         .collect()?;
-    Ok(df.column("pv_bond_cash_flow_up")?.f64()?.sum().unwrap()
+    Ok((df.column("pv_bond_cash_flow_up")?.f64()?.sum().unwrap()
         - df.column("pv_bond_cash_flow_down")?.f64()?.sum().unwrap())
+        / 2.0)
 }
 
+pub fn duration(lf: &LazyFrame) -> PolarsResult<f64> {
+    let df = lf
+        .clone()
+        .with_column((col("discount_curve_shifted") / lit(1.0 + BP)).alias("discount_curve_up"))
+        .with_column((col("discount_curve_shifted") * lit(1.0 + BP)).alias("discount_curve_down"))
+        .with_column(
+            (col("discount_curve_up") * col("bond_cash_flow")).alias("pv_bond_cash_flow_up"),
+        )
+        .with_column(
+            (col("discount_curve_down") * col("bond_cash_flow")).alias("pv_bond_cash_flow_down"),
+        )
+        .collect()?;
+    Ok((df.column("pv_bond_cash_flow_up")?.f64()?.sum().unwrap()
+        - df.column("pv_bond_cash_flow_down")?.f64()?.sum().unwrap())
+        / (2.0 * df.column("pv_bond_cash_flow")?.f64()?.sum().unwrap() * BP))
+}
+
+fn pv(lf: &LazyFrame) -> PolarsResult<f64> {
+    Ok(lf
+        .clone()
+        .collect()?
+        .column("pv_bond_cash_flow")?
+        .f64()?
+        .sum()
+        .unwrap())
+}
+
+#[derive(Default, Debug)]
 pub struct Scenario {
     pub desc: String,
     pub discount_curve: Vec<f64>,
@@ -216,31 +237,133 @@ pub fn a() -> PolarsResult<DataFrame> {
                     when(col("row").eq(lit(i as u32)))
                         .then(col("forward_curve") + lit(0.001))
                         .otherwise(col("forward_curve"))
-                        .alias("forward_curve"),
+                        .alias("forward_curve_shifted"),
                 )
                 // new discount factors
                 .with_column(
-                    (lit(1.0) / (lit(1.0) + col("forward_curve")).cum_prod(false))
-                        .alias("discount_curve"),
+                    (lit(1.0) / (lit(1.0) + col("forward_curve_shifted")).cum_prod(false))
+                        .alias("discount_curve_shifted"),
                 )
                 // new pv
                 .with_column(
-                    (col("discount_curve") * col("bond_cash_flow")).alias("pv_bond_cash_flow"),
-                )
-                // new dv01
-                .with_column(
-                    lit(E)
-                        .pow(-(col("zero_curve") + lit(0.0001)) * col("maturity"))
-                        .alias("discount_curve_up"),
+                    (col("discount_curve_shifted") * col("bond_cash_flow"))
+                        .alias("pv_bond_cash_flow"),
                 );
 
+            let pv = df
+                .column("pv_bond_cash_flow")
+                .unwrap()
+                .f64()
+                .unwrap()
+                .sum()
+                .unwrap();
             // new dv01
             let dv01 = dv01(&scenario).unwrap();
+            let duration = duration(&scenario).unwrap();
             let df_scenario = scenario.collect().unwrap();
-
             // new duration
-            todo!()
+            Scenario {
+                desc: format!("incremented maturity is {}", i + 1),
+                discount_curve: df_scenario
+                    .column("discount_curve_shifted")
+                    .unwrap()
+                    .f64()
+                    .unwrap()
+                    .to_vec()
+                    .into_iter()
+                    .map(|x| x.unwrap())
+                    .collect(),
+                pv,
+                dv01,
+                duration,
+            }
         })
         .collect::<Vec<Scenario>>();
+    //println!("{:#?}", scenarios);
+    // original scenario
+    let df = df
+        .lazy()
+        .with_column(col("discount_curve").alias("discount_curve_shifted"))
+        .collect()?;
+    let scenario = Scenario {
+        desc: String::from("Original"),
+        discount_curve: df
+            .column("discount_curve")
+            .unwrap()
+            .f64()
+            .unwrap()
+            .to_vec()
+            .into_iter()
+            .map(|x| x.unwrap())
+            .collect(),
+        pv: pv(&df.clone().lazy())?,
+        dv01: dv01(&df.clone().lazy())?,
+        duration: duration(&df.clone().lazy())?,
+    };
+    println!("original scenario: {:?}", scenario);
+    // the price remains the same
+    println!(
+        "all_pvs {:?}",
+        scenarios.iter().map(|s| s.pv).collect::<Vec<_>>()
+    );
+    // the dv01 is lowest when the first maturity is shifted, and gets closest to original
+    // when last maturity is shifted
+    println!(
+        "all_dv01s {:?}",
+        scenarios.iter().map(|s| s.dv01).collect::<Vec<_>>()
+    );
+    // the duration is basically identical
+    println!(
+        "all_durations {:?}",
+        scenarios.iter().map(|s| s.duration).collect::<Vec<_>>()
+    );
+
+    // d)
+    let df_shifted_up = df
+        .clone()
+        .lazy()
+        .with_column((col("forward_curve") + lit(0.001)).alias("forward_curve_shifted"))
+        .with_column(
+            (lit(1.0) / (lit(1.0) + col("forward_curve_shifted")))
+                .cum_prod(false)
+                .alias("discount_curve_shifted"),
+        )
+        .with_column(
+            (col("discount_curve_shifted") * col("bond_cash_flow")).alias("pv_bond_cash_flow"),
+        )
+        .collect()?;
+    let df_shifted_down = df
+        .clone()
+        .lazy()
+        .with_column((col("forward_curve") - lit(0.001)).alias("forward_curve_shifted"))
+        .with_column(
+            (lit(1.0) / (lit(1.0) + col("forward_curve_shifted")))
+                .cum_prod(false)
+                .alias("discount_curve_shifted"),
+        )
+        .with_column(
+            (col("discount_curve_shifted") * col("bond_cash_flow")).alias("pv_bond_cash_flow"),
+        )
+        .collect()?;
+    let pv_up = pv(&df_shifted_up.lazy())?;
+    let pv_down = pv(&df_shifted_down.lazy())?;
+    let pv = pv(&df.clone().lazy())?;
+    println!("{}", pv_up);
+    let convexity = (pv_up + pv_down - 2.0 * pv) / (pv * (0.001f64).powi(2));
+    println!("Convexity: {}", convexity);
+
+    // e)
+    // I will use linear interpolation on the discount curve.
+    let discount_curve = df
+        .column("discount_curve")?
+        .f64()?
+        .to_vec()
+        .iter()
+        .map(|x| x.unwrap())
+        .collect::<Vec<_>>();
+    let discount30 =
+        discount_curve[1] + (discount_curve[2] - discount_curve[1]) * (2.5 - 2.0) / (3.0 - 2.0);
+    let forward30 = pv / discount30;
+    println!("Forward (30 months): {}", forward30);
     Ok(df)
 }
