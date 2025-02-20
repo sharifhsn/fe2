@@ -5,17 +5,19 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "blp>=0.0.3",
-    "blpapi>=3.25.1",
+    # "blp>=0.0.3",
+    # "blpapi>=3.25.1",
     "ipykernel>=6.29.5",
     "pandas>=2.2.3",
     "yfinance>=0.2.52",
+    "openpyxl>=3.1.5",
+    "nbconvert[webpdf]>=7.16.6",
 ]
 
-[tool.uv.sources]
-blpapi = { index = "bloomberg" }
+# [tool.uv.sources]
+# blpapi = { index = "bloomberg" }
 
-[[tool.uv.index]]
-name = "bloomberg"
-url = "https://blpapi.bloomberg.com/repository/releases/python/simple/"
-explicit = true
+# [[tool.uv.index]]
+# name = "bloomberg"
+# url = "https://blpapi.bloomberg.com/repository/releases/python/simple/"
+# explicit = true

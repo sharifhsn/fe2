@@ -1,8 +1,4 @@
-
-
 use polars::prelude::*;
-
-
 
 // pub fn data_load() -> PolarsResult<DataFrame> {
 //     df!(

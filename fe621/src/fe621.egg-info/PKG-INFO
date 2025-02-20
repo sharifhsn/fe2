@@ -1,0 +1,11 @@
+Metadata-Version: 2.2
+Name: fe621
+Version: 0.1.0
+Summary: Add your description here
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown
+Requires-Dist: ipykernel>=6.29.5
+Requires-Dist: pandas>=2.2.3
+Requires-Dist: yfinance>=0.2.52
+Requires-Dist: openpyxl>=3.1.5
+Requires-Dist: nbconvert[webpdf]>=7.16.6
