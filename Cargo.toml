@@ -8,5 +8,8 @@ members = [
 resolver = "2"
 
 [workspace.dependencies]
-polars = { version = "0.46", features = ["full"] }
+polars = { version = "0.46", features = ["full", "list_arithmetic"] }
 cubic_spline = { version = "1" }
+
+[profile.release]
+debug = true

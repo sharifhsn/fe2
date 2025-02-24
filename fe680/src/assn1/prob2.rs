@@ -127,7 +127,7 @@ fn plot_yield_curve(cs: &CubicSpline, x_data: &[f64], y_data: &[f64]) {
         ))
         .unwrap()
         .label("Cubic Spline Interpolation")
-        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &BLUE));
+        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], BLUE));
 
     // Draw original data points
     chart
@@ -141,11 +141,11 @@ fn plot_yield_curve(cs: &CubicSpline, x_data: &[f64], y_data: &[f64]) {
         ))
         .unwrap()
         .label("Original Data Points")
-        .legend(|(x, y)| Circle::new((x, y), 5, &RED));
+        .legend(|(x, y)| Circle::new((x, y), 5, RED));
 
     chart
         .configure_series_labels()
-        .border_style(&BLACK)
+        .border_style(BLACK)
         .draw()
         .unwrap();
 

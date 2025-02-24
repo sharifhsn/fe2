@@ -10,8 +10,6 @@
 //! - The **overnight** rate, which is the interest rate that banks charge to lend each other money overnight.
 //! - The **cash** rate, which is the same rate of lending for short periods of time.
 
-use std::f64::consts::E;
-
 use polars::df;
 use polars::prelude::*;
 
