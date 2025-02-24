@@ -1,11 +1,15 @@
 #![allow(clippy::approx_constant)]
+use std::io::Cursor;
+
 use argmin::{
     core::{CostFunction, Executor},
     solver::neldermead::NelderMead,
 };
 
+use image::{codecs::png::PngDecoder, load_from_memory};
 use itertools::izip;
 use plotters::prelude::*;
+use png::Encoder;
 use polars::prelude::*;
 
 fn data_load() -> PolarsResult<DataFrame> {
@@ -117,6 +121,7 @@ const P: f64 = 100.0; // principal
 pub fn a() -> PolarsResult<()> {
     let df = data_load()?;
     println!("{df}");
+
     let lf = df
         .lazy()
         .with_column(
@@ -134,12 +139,10 @@ pub fn a() -> PolarsResult<()> {
                 .alias("num_remaining_payments"),
         )
         .with_column(lit(1.0).alias("weight"));
-
     let nelson_siegel = NelsonSiegel {
         df: lf.collect().unwrap(),
     };
     let initial_params = vec![INIT_BETA_0, INIT_BETA_1, INIT_BETA_2, INIT_LAMBDA];
-
     // Construct initial simplex for Nelder-Mead
     let perturbation = 0.1;
     let mut simplex = vec![initial_params.clone()];
@@ -150,7 +153,8 @@ pub fn a() -> PolarsResult<()> {
         simplex.push(new_vertex);
     }
     // Create Nelder-Mead solver with valid parameter type
-    let solver: NelderMead<Vec<f64>, f64> = NelderMead::new(simplex);
+    let solver: NelderMead<Vec<f64>, f64> =
+        NelderMead::new(simplex).with_sd_tolerance(1e-10).unwrap();
     let res = Executor::new(nelson_siegel, solver).run().unwrap();
     let state = res.state().param.clone().unwrap();
     let beta_0 = state[0];
@@ -190,7 +194,6 @@ pub fn a() -> PolarsResult<()> {
         .unwrap()
         .label("Yield")
         .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], BLUE));
-
     // Configure the legend
     chart
         .configure_series_labels()
