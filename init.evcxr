@@ -1,0 +1,6 @@
+:cache 1000
+:opt 3
+
+:dep image
+:dep base64
+:dep plotters = { version = "0.3", features = ["evcxr", "all_series"] }
