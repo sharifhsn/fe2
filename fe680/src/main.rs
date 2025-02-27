@@ -1,5 +1,5 @@
-use fe680::assn1::prob1::a;
+use fe680::assn2::prob2::a;
 
 fn main() {
-    a().unwrap();
+    println!("{}", a().unwrap());
 }

@@ -934,6 +934,7 @@ dependencies = [
  "plotters",
  "png",
  "polars",
+ "statrs",
 ]
 
 [[package]]
