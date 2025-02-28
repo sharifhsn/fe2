@@ -1,6 +1,7 @@
-:cache 1000
+:cache 4000
 :opt 3
 
 :dep image
 :dep base64
 :dep plotters = { version = "0.3", features = ["evcxr", "all_series"] }
+:dep polars = { version = "0.46", features = [ "full", "list_arithmetic" ] }

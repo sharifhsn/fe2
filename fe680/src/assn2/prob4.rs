@@ -27,10 +27,9 @@ pub fn a() -> PolarsResult<DataFrame> {
         * tau.clone())
         / (lit(1.0) + R_F.clone() / m.clone());
 
-    let timing_adjustment = (alpha_V.clone()
-        * T.clone())
-    .exp()
-    .mean();
+    let R_adjusted = (R_F.clone()
+        * (alpha_V.clone() * T.clone()).exp())
+    .alias("R adjusted");
 
     let P = lit(1.0)
         / (lit(1.0) + R_F.clone())
@@ -38,10 +37,13 @@ pub fn a() -> PolarsResult<DataFrame> {
 
     let V = (L.clone()
         * P.clone()
-        * timing_adjustment.clone())
-    .alias("V");
+        * R_adjusted.clone().mean())
+    .alias("Value after timing adjustment");
 
-    let df = df.lazy().select([V]).collect()?;
+    let df = df
+        .lazy()
+        .select([R_adjusted, V])
+        .collect()?;
 
     Ok(df)
 }

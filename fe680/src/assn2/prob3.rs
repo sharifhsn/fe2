@@ -94,7 +94,7 @@ pub fn a() -> PolarsResult<DataFrame> {
 
     let V = (cap.clone() - floor.clone())
         .sum()
-        .alias("V");
+        .alias("Value of collar");
 
     let df = df.lazy().select([V]).collect()?;
     Ok(df)
