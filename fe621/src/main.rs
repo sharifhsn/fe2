@@ -1,6 +1,9 @@
-use polars::prelude::*;
-//use fe621::yahoo_test::a;
+use fe621::assn2::*;
 
 fn main() {
-    //println!("{:?}", a());
+    //a();
+    prob1::a();
+    prob1::b();
+    prob1::d();
+    prob2::a();
 }

@@ -1,3 +1,5 @@
+use fe630::assn1::prob1::a;
+
 fn main() {
-    println!("Hello, world!");
+    println!("{}", a().unwrap());
 }

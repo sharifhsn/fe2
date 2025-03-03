@@ -46,17 +46,13 @@ pub fn a() -> PolarsResult<DataFrame> {
         - r.clone().pow(2)
             * sigma.clone().pow(2)
             * T.clone()
-            * ((lit(-1.0)
-                + tau_1.clone().pow(2))
-                / tau_1.clone())
+            * (-tau_1.clone())
             / lit(2.0);
     let conv2 = r.clone()
         - r.clone().pow(2)
             * sigma.clone().pow(2)
             * T.clone()
-            * ((lit(-1.0)
-                + tau_2.clone().pow(2))
-                / tau_2.clone())
+            * (-tau_2.clone())
             / lit(2.0);
 
     let convexity_1: Expr = (r.clone().pow(2)

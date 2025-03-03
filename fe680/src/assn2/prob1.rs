@@ -49,7 +49,7 @@ pub fn a() -> PolarsResult<DataFrame> {
     let option_type = col("option type");
     let r_curve = col("r curve");
 
-    let time_of_last_payment =
+    let time_of_last_payment: Expr =
         time_to_next_payment.clone()
             + (((T.clone()
                 - time_to_next_payment.clone())

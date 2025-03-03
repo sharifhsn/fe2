@@ -1,8 +1,6 @@
 use anyhow::Result;
-use std::time::{Duration, Instant};
 use yahoo_finance_api as yf;
 
-use jiff::Timestamp;
 
 use polars::prelude::*;
 

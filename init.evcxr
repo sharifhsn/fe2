@@ -1,5 +1,4 @@
 :cache 4000
-:opt 3
 
 :dep image
 :dep base64
