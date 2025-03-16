@@ -16,6 +16,7 @@ enum OptionStyle {
     American,
 }
 
+#[derive(Clone)]
 pub struct FiniteDifference {
     option_type: OptionType,
     option_style: OptionStyle,
@@ -25,14 +26,15 @@ pub struct FiniteDifference {
     sig: f64,
     r: f64,
     div: f64,
-    n: usize,
-    N: usize,
+    epsilon: f64,
 }
 
 impl FiniteDifference {
     pub fn explicit(&self) -> f64 {
         // precompute constants
-        let dt = self.T / self.n as f64;
+        let dt = self.epsilon / (1.0 + 3.0 * self.sig.powi(2));
+        let n = (self.T / dt).ceil() as usize;
+        let N = n;
         let dx = self.sig * (3.0 * dt).sqrt();
         let nu = self.r - self.div - 0.5 * self.sig.powi(2);
         let edx = dx.exp();
@@ -42,33 +44,33 @@ impl FiniteDifference {
 
         // initialize asset prices at maturity
         // conceptually, the mapping goes from [-N, N] to [0, 2N].rev() by j - N
-        let mut St = DVector::zeros(2 * self.N + 1);
-        St[2 * self.N] = self.S * (-(self.N as f64) * dx).exp();
-        for j in (0..2 * self.N).rev() {
+        let mut St = DVector::zeros(2 * N + 1);
+        St[2 * N] = self.S * (-(N as f64) * dx).exp();
+        for j in (0..2 * N).rev() {
             St[j] = St[j + 1] * edx;
         }
 
         // initialize option values at maturity
-        let mut C = DMatrix::zeros(2 * self.N + 1, self.n + 1);
-        for j in 0..=2 * self.N {
-            C[(j, self.n)] = 0.0f64.max(match self.option_type {
+        let mut C = DMatrix::zeros(2 * N + 1, N + 1);
+        for j in 0..=2 * N {
+            C[(j, N)] = 0.0f64.max(match self.option_type {
                 OptionType::Call => St[j] - self.K,
                 OptionType::Put => self.K - St[j],
             });
         }
 
         // step back through lattice
-        for i in (0..self.n).rev() {
+        for i in (0..n).rev() {
             // calculate discounted expectation
-            for j in 1..2 * self.N {
+            for j in 1..2 * N {
                 C[(j, i)] = pu * C[(j - 1, i + 1)] + pm * C[(j, i + 1)] + pd * C[(j + 1, i + 1)];
             }
 
             // boundary conditions, subject to option type
-            C[(2 * self.N, i)] = C[(2 * self.N - 1, i)]
+            C[(2 * N, i)] = C[(2 * N - 1, i)]
                 + match self.option_type {
                     OptionType::Call => 0.0,
-                    OptionType::Put => St[2 * self.N - 1] - St[2 * self.N],
+                    OptionType::Put => St[2 * N - 1] - St[2 * N],
                 };
             C[(0, i)] = C[(1, i)]
                 + match self.option_type {
@@ -78,7 +80,7 @@ impl FiniteDifference {
 
             // apply early exercise condition
             if self.option_style == OptionStyle::American {
-                for j in 0..=2 * self.N {
+                for j in 0..=2 * N {
                     C[(j, i)] = C[(j, i)].max(match self.option_type {
                         OptionType::Call => St[j] - self.K,
                         OptionType::Put => self.K - St[j],
@@ -86,14 +88,20 @@ impl FiniteDifference {
                 }
             }
         }
-
-        C[(self.N, 0)]
+        println!("Explicit finite difference:");
+        println!("n: {n}");
+        println!("N: {N}");
+        C[(N, 0)]
     }
 
     pub fn implicit(&self) -> f64 {
         // precompute constants
-        let dt = self.T / self.n as f64;
-        let dx = self.sig * (3.0 * dt).sqrt();
+        let dt = self.epsilon / 2.0;
+        let dx = (self.epsilon / 2.0).sqrt();
+        let n = (self.T / dt).ceil() as usize;
+        //let N = (3.0 * self.sig * self.T.sqrt() / dx).ceil() as usize;
+        let N = n;
+
         let nu = self.r - self.div - 0.5 * self.sig.powi(2);
         let edx = dx.exp();
         let a = -0.5 * dt * ((self.sig / dx).powi(2) + nu / dx);
@@ -102,15 +110,15 @@ impl FiniteDifference {
 
         // initialize asset prices at maturity
         // conceptually, the mapping goes from [-N, N] to [0, 2N].rev() by j - N
-        let mut St = DVector::zeros(2 * self.N + 1);
-        St[2 * self.N] = self.S * (-(self.N as f64) * dx).exp();
-        for j in (0..2 * self.N).rev() {
+        let mut St = DVector::zeros(2 * N + 1);
+        St[2 * N] = self.S * (-(N as f64) * dx).exp();
+        for j in (0..2 * N).rev() {
             St[j] = St[j + 1] * edx;
         }
 
         // initialize option values at maturity
-        let mut C = DMatrix::zeros(2 * self.N + 1, 2);
-        for j in 0..=2 * self.N {
+        let mut C = DMatrix::zeros(2 * N + 1, 2);
+        for j in 0..=2 * N {
             C[(j, 0)] = 0.0f64.max(match self.option_type {
                 OptionType::Call => St[j] - self.K,
                 OptionType::Put => self.K - St[j],
@@ -123,25 +131,25 @@ impl FiniteDifference {
                 OptionType::Call => 1.0,
                 OptionType::Put => 0.0,
             };
-        let lambda_L = (St[2 * self.N] - St[2 * self.N - 1])
+        let lambda_L = (St[2 * N] - St[2 * N - 1])
             * match self.option_type {
                 OptionType::Call => 0.0,
                 OptionType::Put => -1.0,
             };
 
         // step back through lattice
-        for _ in (0..self.n).rev() {
+        for _ in (0..n).rev() {
             // boundary conditions, subject to option type
             Self::solve_tridiagonal_recurrence(&mut C, a, b, c, lambda_L, lambda_U);
 
             // update option values for the current time step
-            for j in 0..=2 * self.N {
+            for j in 0..=2 * N {
                 C[(j, 0)] = C[(j, 1)];
             }
             //println!("{}", C);
             // apply early exercise condition
             if self.option_style == OptionStyle::American {
-                for j in 0..=2 * self.N {
+                for j in 0..=2 * N {
                     C[(j, 0)] = C[(j, 0)].max(match self.option_type {
                         OptionType::Call => St[j] - self.K,
                         OptionType::Put => self.K - St[j],
@@ -149,13 +157,19 @@ impl FiniteDifference {
                 }
             }
         }
-        C[(self.N, 0)]
+        println!("Implicit finite difference:");
+        println!("n: {n}");
+        println!("N: {N}");
+        C[(N, 0)]
     }
 
     pub fn crank_nicholson(&self) -> f64 {
         // precompute constants
-        let dt = self.T / self.n as f64;
-        let dx = self.sig * (3.0 * dt).sqrt();
+        let dt = 2.0 * (self.epsilon / 2.0).sqrt();
+        let dx = (self.epsilon / 2.0).sqrt();
+        let N = (3.0 * self.sig * self.T.sqrt() / dx).ceil() as usize;
+        let n = (self.T / dt).ceil() as usize;
+
         let nu = self.r - self.div - 0.5 * self.sig.powi(2);
         let edx = dx.exp();
         let a = -0.25 * dt * ((self.sig / dx).powi(2) + nu / dx);
@@ -164,15 +178,15 @@ impl FiniteDifference {
 
         // initialize asset prices at maturity
         // conceptually, the mapping goes from [-N, N] to [0, 2N].rev() by j - N
-        let mut St = DVector::zeros(2 * self.N + 1);
-        St[2 * self.N] = self.S * (-(self.N as f64) * dx).exp();
-        for j in (0..2 * self.N).rev() {
+        let mut St = DVector::zeros(2 * N + 1);
+        St[2 * N] = self.S * (-(N as f64) * dx).exp();
+        for j in (0..2 * N).rev() {
             St[j] = St[j + 1] * edx;
         }
 
         // initialize option values at maturity
-        let mut C = DMatrix::zeros(2 * self.N + 1, 2);
-        for j in 0..=2 * self.N {
+        let mut C = DMatrix::zeros(2 * N + 1, 2);
+        for j in 0..=2 * N {
             C[(j, 0)] = 0.0f64.max(match self.option_type {
                 OptionType::Call => St[j] - self.K,
                 OptionType::Put => self.K - St[j],
@@ -185,25 +199,25 @@ impl FiniteDifference {
                 OptionType::Call => 1.0,
                 OptionType::Put => 0.0,
             };
-        let lambda_L = (St[2 * self.N] - St[2 * self.N - 1])
+        let lambda_L = (St[2 * N] - St[2 * N - 1])
             * match self.option_type {
                 OptionType::Call => 0.0,
                 OptionType::Put => -1.0,
             };
 
         // step back through lattice
-        for _ in (0..self.n).rev() {
+        for _ in (0..n).rev() {
             // boundary conditions, subject to option type
             Self::solve_tridiagonal_recurrence(&mut C, a, b, c, lambda_L, lambda_U);
 
             // update option values for the current time step
-            for j in 0..=2 * self.N {
+            for j in 0..=2 * N {
                 C[(j, 0)] = C[(j, 1)];
             }
             //println!("{}", C);
             // apply early exercise condition
             if self.option_style == OptionStyle::American {
-                for j in 0..=2 * self.N {
+                for j in 0..=2 * N {
                     C[(j, 0)] = C[(j, 0)].max(match self.option_type {
                         OptionType::Call => St[j] - self.K,
                         OptionType::Put => self.K - St[j],
@@ -211,7 +225,7 @@ impl FiniteDifference {
                 }
             }
         }
-        C[(self.N, 0)]
+        C[(N, 0)]
     }
     fn solve_tridiagonal_recurrence(
         C: &mut DMatrix<f64>,
@@ -307,6 +321,15 @@ impl FiniteDifference {
 
         C.column_mut(1).copy_from(&x);
     }
+
+    pub fn delta(&self) -> f64 {
+        let epsilon = 1e-4;
+        let v1 = self.clone();
+        let v2 = self.clone();
+        let v1 = v1.explicit();
+        let v2 = v2.explicit();
+        (v2 - v1) / epsilon
+    }
 }
 
 fn black_scholes(
@@ -333,100 +356,9 @@ fn black_scholes(
     }
 }
 
-pub fn assn2() -> PolarsResult<()> {
-    let df_hist = CsvReadOptions::default()
-        .with_has_header(true)
-        .try_into_reader_with_file_path(Some(PathBuf::from("historical_data.csv")))?
-        .finish()?;
-    //println!("{:?}", df_hist);
-
-    let data2 = df_hist
-        .lazy()
-        .filter(
-            col("Datetime")
-                .str()
-                .to_date(StrptimeOptions {
-                    format: Some("%Y-%m-%d %H:%M:%S%z".into()),
-                    strict: false,
-                    exact: true,
-                    ..Default::default()
-                })
-                .dt()
-                .date()
-                .eq(datetime(DatetimeArgs::new(lit(2025), lit(2), lit(14)))
-                    .dt()
-                    .date()),
-        )
-        .collect()?;
-    let data2_latest = data2.sort(["Datetime"], Default::default())?.tail(Some(1));
-    let s0_nvda = data2_latest.column("NVDA")?.f64()?.get(0).unwrap();
-
-    let mut df_opt = CsvReadOptions::default()
-        .with_has_header(true)
-        .try_into_reader_with_file_path(Some(PathBuf::from("options_data.csv")))?
-        .finish()?
-        .lazy()
-        .with_column(
-            col("lastTradeDate")
-                .str()
-                .to_date(StrptimeOptions {
-                    format: Some("%Y-%m-%d %H:%M:%S%z".into()),
-                    strict: false,
-                    exact: true,
-                    ..Default::default()
-                })
-                .alias("lastTradeDate"),
-        )
-        .with_column(
-            col("expirationDate")
-                .str()
-                .to_date(StrptimeOptions {
-                    format: Some("%Y-%m-%d".into()),
-                    strict: false,
-                    exact: true,
-                    ..Default::default()
-                })
-                .alias("expirationDate"),
-        )
-        .with_column(
-            (col("expirationDate").dt().date() - col("lastTradeDate").dt().date())
-                .alias("timeToMaturity"),
-        )
-        // Filter for NVDA calls and puts
-        .filter(col("ticker").eq(lit("NVDA")))
-        .with_column((col("strike") - lit(s0_nvda)).abs().alias("abs_diff"))
-        .group_by(["expirationDate", "optionType"])
-        .agg([col("*")
-            .sort_by([col("abs_diff")], SortMultipleOptions::default())
-            .head(Some(10))])
-        .select([
-            col("strike"),
-            col("lastPrice"),
-            col("bid"),
-            col("ask"),
-            col("impliedVolatility"),
-            col("optionType"),
-            col("expirationDate"),
-            col("timeToMaturity"),
-        ])
-        .explode([
-            "strike",
-            "lastPrice",
-            "bid",
-            "ask",
-            "impliedVolatility",
-            "timeToMaturity",
-        ])
-        .sort(
-            ["expirationDate", "optionType", "strike"],
-            Default::default(),
-        )
-        .collect()?;
-    println!("{:?}", df_opt);
-    Ok(())
-}
-
 pub fn a() -> PolarsResult<()> {
+    const EPSILON: f64 = 1e-4;
+
     let fd = FiniteDifference {
         option_type: OptionType::Call,
         option_style: OptionStyle::European,
@@ -435,15 +367,14 @@ pub fn a() -> PolarsResult<()> {
         S: 100.0,
         sig: 0.2,
         r: 0.06,
-        div: 0.03,
-        n: 300,
-        N: 300,
+        div: 0.02,
+        epsilon: EPSILON,
     };
-    let v = fd.crank_nicholson();
+    let v = fd.implicit();
     let bs_value = black_scholes(fd.option_type, fd.S, fd.K, fd.T, fd.r, fd.sig, fd.div);
     println!("Finite Difference Value: {v}");
     println!("Black-Scholes Value: {bs_value}");
+
     println!("Hello, world!");
-    assn2()?;
     Ok(())
 }
