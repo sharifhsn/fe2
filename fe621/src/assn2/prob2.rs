@@ -2,9 +2,28 @@ use nalgebra::{DMatrix, DVector};
 use statrs::distribution::{ContinuousCDF, Normal};
 use std::f64::consts::E;
 
-enum OptionType {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum OptionType {
     Call,
     Put,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ExerciseStyle {
+    American,
+    European,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BarrierType {
+    KnockIn,
+    KnockOut,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BarrierDirection {
+    Up,
+    Down,
 }
 
 /// European Up-and-Out Call Barrier Option using an Additive Trinomial Tree
