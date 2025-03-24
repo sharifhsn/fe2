@@ -1,0 +1,834 @@
+\documentclass[11pt]{article}
+
+    \usepackage[breakable]{tcolorbox}
+    \usepackage{parskip} % Stop auto-indenting (to mimic markdown behaviour)
+    
+
+    % Basic figure setup, for now with no caption control since it's done
+    % automatically by Pandoc (which extracts ![](path) syntax from Markdown).
+    \usepackage{graphicx}
+    % Keep aspect ratio if custom image width or height is specified
+    \setkeys{Gin}{keepaspectratio}
+    % Maintain compatibility with old templates. Remove in nbconvert 6.0
+    \let\Oldincludegraphics\includegraphics
+    % Ensure that by default, figures have no caption (until we provide a
+    % proper Figure object with a Caption API and a way to capture that
+    % in the conversion process - todo).
+    \usepackage{caption}
+    \DeclareCaptionFormat{nocaption}{}
+    \captionsetup{format=nocaption,aboveskip=0pt,belowskip=0pt}
+
+    \usepackage{float}
+    \floatplacement{figure}{H} % forces figures to be placed at the correct location
+    \usepackage{xcolor} % Allow colors to be defined
+    \usepackage{enumerate} % Needed for markdown enumerations to work
+    \usepackage{geometry} % Used to adjust the document margins
+    \usepackage{amsmath} % Equations
+    \usepackage{amssymb} % Equations
+    \usepackage{textcomp} % defines textquotesingle
+    % Hack from http://tex.stackexchange.com/a/47451/13684:
+    \AtBeginDocument{%
+        \def\PYZsq{\textquotesingle}% Upright quotes in Pygmentized code
+    }
+    \usepackage{upquote} % Upright quotes for verbatim code
+    \usepackage{eurosym} % defines \euro
+
+    \usepackage{iftex}
+    \ifPDFTeX
+        \usepackage[T1]{fontenc}
+        \IfFileExists{alphabeta.sty}{
+              \usepackage{alphabeta}
+          }{
+              \usepackage[mathletters]{ucs}
+              \usepackage[utf8x]{inputenc}
+          }
+    \else
+        \usepackage{fontspec}
+        \usepackage{unicode-math}
+    \fi
+
+    \usepackage{fancyvrb} % verbatim replacement that allows latex
+    \usepackage{grffile} % extends the file name processing of package graphics
+                         % to support a larger range
+    \makeatletter % fix for old versions of grffile with XeLaTeX
+    \@ifpackagelater{grffile}{2019/11/01}
+    {
+      % Do nothing on new versions
+    }
+    {
+      \def\Gread@@xetex#1{%
+        \IfFileExists{"\Gin@base".bb}%
+        {\Gread@eps{\Gin@base.bb}}%
+        {\Gread@@xetex@aux#1}%
+      }
+    }
+    \makeatother
+    \usepackage[Export]{adjustbox} % Used to constrain images to a maximum size
+    \adjustboxset{max size={0.9\linewidth}{0.9\paperheight}}
+
+    % The hyperref package gives us a pdf with properly built
+    % internal navigation ('pdf bookmarks' for the table of contents,
+    % internal cross-reference links, web links for URLs, etc.)
+    \usepackage{hyperref}
+    % The default LaTeX title has an obnoxious amount of whitespace. By default,
+    % titling removes some of it. It also provides customization options.
+    \usepackage{titling}
+    \usepackage{longtable} % longtable support required by pandoc >1.10
+    \usepackage{booktabs}  % table support for pandoc > 1.12.2
+    \usepackage{array}     % table support for pandoc >= 2.11.3
+    \usepackage{calc}      % table minipage width calculation for pandoc >= 2.11.1
+    \usepackage[inline]{enumitem} % IRkernel/repr support (it uses the enumerate* environment)
+    \usepackage[normalem]{ulem} % ulem is needed to support strikethroughs (\sout)
+                                % normalem makes italics be italics, not underlines
+    \usepackage{soul}      % strikethrough (\st) support for pandoc >= 3.0.0
+    \usepackage{mathrsfs}
+    
+
+    
+    % Colors for the hyperref package
+    \definecolor{urlcolor}{rgb}{0,.145,.698}
+    \definecolor{linkcolor}{rgb}{.71,0.21,0.01}
+    \definecolor{citecolor}{rgb}{.12,.54,.11}
+
+    % ANSI colors
+    \definecolor{ansi-black}{HTML}{3E424D}
+    \definecolor{ansi-black-intense}{HTML}{282C36}
+    \definecolor{ansi-red}{HTML}{E75C58}
+    \definecolor{ansi-red-intense}{HTML}{B22B31}
+    \definecolor{ansi-green}{HTML}{00A250}
+    \definecolor{ansi-green-intense}{HTML}{007427}
+    \definecolor{ansi-yellow}{HTML}{DDB62B}
+    \definecolor{ansi-yellow-intense}{HTML}{B27D12}
+    \definecolor{ansi-blue}{HTML}{208FFB}
+    \definecolor{ansi-blue-intense}{HTML}{0065CA}
+    \definecolor{ansi-magenta}{HTML}{D160C4}
+    \definecolor{ansi-magenta-intense}{HTML}{A03196}
+    \definecolor{ansi-cyan}{HTML}{60C6C8}
+    \definecolor{ansi-cyan-intense}{HTML}{258F8F}
+    \definecolor{ansi-white}{HTML}{C5C1B4}
+    \definecolor{ansi-white-intense}{HTML}{A1A6B2}
+    \definecolor{ansi-default-inverse-fg}{HTML}{FFFFFF}
+    \definecolor{ansi-default-inverse-bg}{HTML}{000000}
+
+    % common color for the border for error outputs.
+    \definecolor{outerrorbackground}{HTML}{FFDFDF}
+
+    % commands and environments needed by pandoc snippets
+    % extracted from the output of `pandoc -s`
+    \providecommand{\tightlist}{%
+      \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+    \DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+    % Add ',fontsize=\small' for more characters per line
+    \newenvironment{Shaded}{}{}
+    \newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{\textbf{{#1}}}}
+    \newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.56,0.13,0.00}{{#1}}}
+    \newcommand{\DecValTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{{#1}}}
+    \newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{{#1}}}
+    \newcommand{\FloatTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{{#1}}}
+    \newcommand{\CharTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{{#1}}}
+    \newcommand{\StringTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{{#1}}}
+    \newcommand{\CommentTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textit{{#1}}}}
+    \newcommand{\OtherTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{{#1}}}
+    \newcommand{\AlertTok}[1]{\textcolor[rgb]{1.00,0.00,0.00}{\textbf{{#1}}}}
+    \newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.02,0.16,0.49}{{#1}}}
+    \newcommand{\RegionMarkerTok}[1]{{#1}}
+    \newcommand{\ErrorTok}[1]{\textcolor[rgb]{1.00,0.00,0.00}{\textbf{{#1}}}}
+    \newcommand{\NormalTok}[1]{{#1}}
+
+    % Additional commands for more recent versions of Pandoc
+    \newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.53,0.00,0.00}{{#1}}}
+    \newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{{#1}}}
+    \newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{{#1}}}
+    \newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.73,0.40,0.53}{{#1}}}
+    \newcommand{\ImportTok}[1]{{#1}}
+    \newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.73,0.13,0.13}{\textit{{#1}}}}
+    \newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{{#1}}}}}
+    \newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{{#1}}}}}
+    \newcommand{\VariableTok}[1]{\textcolor[rgb]{0.10,0.09,0.49}{{#1}}}
+    \newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{\textbf{{#1}}}}
+    \newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.40,0.40,0.40}{{#1}}}
+    \newcommand{\BuiltInTok}[1]{{#1}}
+    \newcommand{\ExtensionTok}[1]{{#1}}
+    \newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.74,0.48,0.00}{{#1}}}
+    \newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.49,0.56,0.16}{{#1}}}
+    \newcommand{\InformationTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{{#1}}}}}
+    \newcommand{\WarningTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{{#1}}}}}
+    \makeatletter
+    \newsavebox\pandoc@box
+    \newcommand*\pandocbounded[1]{%
+      \sbox\pandoc@box{#1}%
+      % scaling factors for width and height
+      \Gscale@div\@tempa\textheight{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+      \Gscale@div\@tempb\linewidth{\wd\pandoc@box}%
+      % select the smaller of both
+      \ifdim\@tempb\p@<\@tempa\p@
+        \let\@tempa\@tempb
+      \fi
+      % scaling accordingly (\@tempa < 1)
+      \ifdim\@tempa\p@<\p@
+        \scalebox{\@tempa}{\usebox\pandoc@box}%
+      % scaling not needed, use as it is
+      \else
+        \usebox{\pandoc@box}%
+      \fi
+    }
+    \makeatother
+
+    % Define a nice break command that doesn't care if a line doesn't already
+    % exist.
+    \def\br{\hspace*{\fill} \\* }
+    % Math Jax compatibility definitions
+    \def\gt{>}
+    \def\lt{<}
+    \let\Oldtex\TeX
+    \let\Oldlatex\LaTeX
+    \renewcommand{\TeX}{\textrm{\Oldtex}}
+    \renewcommand{\LaTeX}{\textrm{\Oldlatex}}
+    % Document parameters
+    % Document title
+    \title{assn3}
+    
+    
+    
+    
+    
+    
+    
+% Pygments definitions
+\makeatletter
+\def\PY@reset{\let\PY@it=\relax \let\PY@bf=\relax%
+    \let\PY@ul=\relax \let\PY@tc=\relax%
+    \let\PY@bc=\relax \let\PY@ff=\relax}
+\def\PY@tok#1{\csname PY@tok@#1\endcsname}
+\def\PY@toks#1+{\ifx\relax#1\empty\else%
+    \PY@tok{#1}\expandafter\PY@toks\fi}
+\def\PY@do#1{\PY@bc{\PY@tc{\PY@ul{%
+    \PY@it{\PY@bf{\PY@ff{#1}}}}}}}
+\def\PY#1#2{\PY@reset\PY@toks#1+\relax+\PY@do{#2}}
+
+\@namedef{PY@tok@w}{\def\PY@tc##1{\textcolor[rgb]{0.73,0.73,0.73}{##1}}}
+\@namedef{PY@tok@c}{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.24,0.48,0.48}{##1}}}
+\@namedef{PY@tok@cp}{\def\PY@tc##1{\textcolor[rgb]{0.61,0.40,0.00}{##1}}}
+\@namedef{PY@tok@k}{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\@namedef{PY@tok@kp}{\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\@namedef{PY@tok@kt}{\def\PY@tc##1{\textcolor[rgb]{0.69,0.00,0.25}{##1}}}
+\@namedef{PY@tok@o}{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\@namedef{PY@tok@ow}{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.67,0.13,1.00}{##1}}}
+\@namedef{PY@tok@nb}{\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\@namedef{PY@tok@nf}{\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,1.00}{##1}}}
+\@namedef{PY@tok@nc}{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,1.00}{##1}}}
+\@namedef{PY@tok@nn}{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,1.00}{##1}}}
+\@namedef{PY@tok@ne}{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.80,0.25,0.22}{##1}}}
+\@namedef{PY@tok@nv}{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\@namedef{PY@tok@no}{\def\PY@tc##1{\textcolor[rgb]{0.53,0.00,0.00}{##1}}}
+\@namedef{PY@tok@nl}{\def\PY@tc##1{\textcolor[rgb]{0.46,0.46,0.00}{##1}}}
+\@namedef{PY@tok@ni}{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.44,0.44,0.44}{##1}}}
+\@namedef{PY@tok@na}{\def\PY@tc##1{\textcolor[rgb]{0.41,0.47,0.13}{##1}}}
+\@namedef{PY@tok@nt}{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\@namedef{PY@tok@nd}{\def\PY@tc##1{\textcolor[rgb]{0.67,0.13,1.00}{##1}}}
+\@namedef{PY@tok@s}{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\@namedef{PY@tok@sd}{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\@namedef{PY@tok@si}{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.64,0.35,0.47}{##1}}}
+\@namedef{PY@tok@se}{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.67,0.36,0.12}{##1}}}
+\@namedef{PY@tok@sr}{\def\PY@tc##1{\textcolor[rgb]{0.64,0.35,0.47}{##1}}}
+\@namedef{PY@tok@ss}{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\@namedef{PY@tok@sx}{\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\@namedef{PY@tok@m}{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\@namedef{PY@tok@gh}{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,0.50}{##1}}}
+\@namedef{PY@tok@gu}{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.50,0.00,0.50}{##1}}}
+\@namedef{PY@tok@gd}{\def\PY@tc##1{\textcolor[rgb]{0.63,0.00,0.00}{##1}}}
+\@namedef{PY@tok@gi}{\def\PY@tc##1{\textcolor[rgb]{0.00,0.52,0.00}{##1}}}
+\@namedef{PY@tok@gr}{\def\PY@tc##1{\textcolor[rgb]{0.89,0.00,0.00}{##1}}}
+\@namedef{PY@tok@ge}{\let\PY@it=\textit}
+\@namedef{PY@tok@gs}{\let\PY@bf=\textbf}
+\@namedef{PY@tok@ges}{\let\PY@bf=\textbf\let\PY@it=\textit}
+\@namedef{PY@tok@gp}{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,0.50}{##1}}}
+\@namedef{PY@tok@go}{\def\PY@tc##1{\textcolor[rgb]{0.44,0.44,0.44}{##1}}}
+\@namedef{PY@tok@gt}{\def\PY@tc##1{\textcolor[rgb]{0.00,0.27,0.87}{##1}}}
+\@namedef{PY@tok@err}{\def\PY@bc##1{{\setlength{\fboxsep}{\string -\fboxrule}\fcolorbox[rgb]{1.00,0.00,0.00}{1,1,1}{\strut ##1}}}}
+\@namedef{PY@tok@kc}{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\@namedef{PY@tok@kd}{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\@namedef{PY@tok@kn}{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\@namedef{PY@tok@kr}{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\@namedef{PY@tok@bp}{\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\@namedef{PY@tok@fm}{\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,1.00}{##1}}}
+\@namedef{PY@tok@vc}{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\@namedef{PY@tok@vg}{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\@namedef{PY@tok@vi}{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\@namedef{PY@tok@vm}{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\@namedef{PY@tok@sa}{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\@namedef{PY@tok@sb}{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\@namedef{PY@tok@sc}{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\@namedef{PY@tok@dl}{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\@namedef{PY@tok@s2}{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\@namedef{PY@tok@sh}{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\@namedef{PY@tok@s1}{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\@namedef{PY@tok@mb}{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\@namedef{PY@tok@mf}{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\@namedef{PY@tok@mh}{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\@namedef{PY@tok@mi}{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\@namedef{PY@tok@il}{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\@namedef{PY@tok@mo}{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\@namedef{PY@tok@ch}{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.24,0.48,0.48}{##1}}}
+\@namedef{PY@tok@cm}{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.24,0.48,0.48}{##1}}}
+\@namedef{PY@tok@cpf}{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.24,0.48,0.48}{##1}}}
+\@namedef{PY@tok@c1}{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.24,0.48,0.48}{##1}}}
+\@namedef{PY@tok@cs}{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.24,0.48,0.48}{##1}}}
+
+\def\PYZbs{\char`\\}
+\def\PYZus{\char`\_}
+\def\PYZob{\char`\{}
+\def\PYZcb{\char`\}}
+\def\PYZca{\char`\^}
+\def\PYZam{\char`\&}
+\def\PYZlt{\char`\<}
+\def\PYZgt{\char`\>}
+\def\PYZsh{\char`\#}
+\def\PYZpc{\char`\%}
+\def\PYZdl{\char`\$}
+\def\PYZhy{\char`\-}
+\def\PYZsq{\char`\'}
+\def\PYZdq{\char`\"}
+\def\PYZti{\char`\~}
+% for compatibility with earlier versions
+\def\PYZat{@}
+\def\PYZlb{[}
+\def\PYZrb{]}
+\makeatother
+
+
+    % For linebreaks inside Verbatim environment from package fancyvrb.
+    \makeatletter
+        \newbox\Wrappedcontinuationbox
+        \newbox\Wrappedvisiblespacebox
+        \newcommand*\Wrappedvisiblespace {\textcolor{red}{\textvisiblespace}}
+        \newcommand*\Wrappedcontinuationsymbol {\textcolor{red}{\llap{\tiny$\m@th\hookrightarrow$}}}
+        \newcommand*\Wrappedcontinuationindent {3ex }
+        \newcommand*\Wrappedafterbreak {\kern\Wrappedcontinuationindent\copy\Wrappedcontinuationbox}
+        % Take advantage of the already applied Pygments mark-up to insert
+        % potential linebreaks for TeX processing.
+        %        {, <, #, %, $, ' and ": go to next line.
+        %        _, }, ^, &, >, - and ~: stay at end of broken line.
+        % Use of \textquotesingle for straight quote.
+        \newcommand*\Wrappedbreaksatspecials {%
+            \def\PYGZus{\discretionary{\char`\_}{\Wrappedafterbreak}{\char`\_}}%
+            \def\PYGZob{\discretionary{}{\Wrappedafterbreak\char`\{}{\char`\{}}%
+            \def\PYGZcb{\discretionary{\char`\}}{\Wrappedafterbreak}{\char`\}}}%
+            \def\PYGZca{\discretionary{\char`\^}{\Wrappedafterbreak}{\char`\^}}%
+            \def\PYGZam{\discretionary{\char`\&}{\Wrappedafterbreak}{\char`\&}}%
+            \def\PYGZlt{\discretionary{}{\Wrappedafterbreak\char`\<}{\char`\<}}%
+            \def\PYGZgt{\discretionary{\char`\>}{\Wrappedafterbreak}{\char`\>}}%
+            \def\PYGZsh{\discretionary{}{\Wrappedafterbreak\char`\#}{\char`\#}}%
+            \def\PYGZpc{\discretionary{}{\Wrappedafterbreak\char`\%}{\char`\%}}%
+            \def\PYGZdl{\discretionary{}{\Wrappedafterbreak\char`\$}{\char`\$}}%
+            \def\PYGZhy{\discretionary{\char`\-}{\Wrappedafterbreak}{\char`\-}}%
+            \def\PYGZsq{\discretionary{}{\Wrappedafterbreak\textquotesingle}{\textquotesingle}}%
+            \def\PYGZdq{\discretionary{}{\Wrappedafterbreak\char`\"}{\char`\"}}%
+            \def\PYGZti{\discretionary{\char`\~}{\Wrappedafterbreak}{\char`\~}}%
+        }
+        % Some characters . , ; ? ! / are not pygmentized.
+        % This macro makes them "active" and they will insert potential linebreaks
+        \newcommand*\Wrappedbreaksatpunct {%
+            \lccode`\~`\.\lowercase{\def~}{\discretionary{\hbox{\char`\.}}{\Wrappedafterbreak}{\hbox{\char`\.}}}%
+            \lccode`\~`\,\lowercase{\def~}{\discretionary{\hbox{\char`\,}}{\Wrappedafterbreak}{\hbox{\char`\,}}}%
+            \lccode`\~`\;\lowercase{\def~}{\discretionary{\hbox{\char`\;}}{\Wrappedafterbreak}{\hbox{\char`\;}}}%
+            \lccode`\~`\:\lowercase{\def~}{\discretionary{\hbox{\char`\:}}{\Wrappedafterbreak}{\hbox{\char`\:}}}%
+            \lccode`\~`\?\lowercase{\def~}{\discretionary{\hbox{\char`\?}}{\Wrappedafterbreak}{\hbox{\char`\?}}}%
+            \lccode`\~`\!\lowercase{\def~}{\discretionary{\hbox{\char`\!}}{\Wrappedafterbreak}{\hbox{\char`\!}}}%
+            \lccode`\~`\/\lowercase{\def~}{\discretionary{\hbox{\char`\/}}{\Wrappedafterbreak}{\hbox{\char`\/}}}%
+            \catcode`\.\active
+            \catcode`\,\active
+            \catcode`\;\active
+            \catcode`\:\active
+            \catcode`\?\active
+            \catcode`\!\active
+            \catcode`\/\active
+            \lccode`\~`\~
+        }
+    \makeatother
+
+    \let\OriginalVerbatim=\Verbatim
+    \makeatletter
+    \renewcommand{\Verbatim}[1][1]{%
+        %\parskip\z@skip
+        \sbox\Wrappedcontinuationbox {\Wrappedcontinuationsymbol}%
+        \sbox\Wrappedvisiblespacebox {\FV@SetupFont\Wrappedvisiblespace}%
+        \def\FancyVerbFormatLine ##1{\hsize\linewidth
+            \vtop{\raggedright\hyphenpenalty\z@\exhyphenpenalty\z@
+                \doublehyphendemerits\z@\finalhyphendemerits\z@
+                \strut ##1\strut}%
+        }%
+        % If the linebreak is at a space, the latter will be displayed as visible
+        % space at end of first line, and a continuation symbol starts next line.
+        % Stretch/shrink are however usually zero for typewriter font.
+        \def\FV@Space {%
+            \nobreak\hskip\z@ plus\fontdimen3\font minus\fontdimen4\font
+            \discretionary{\copy\Wrappedvisiblespacebox}{\Wrappedafterbreak}
+            {\kern\fontdimen2\font}%
+        }%
+
+        % Allow breaks at special characters using \PYG... macros.
+        \Wrappedbreaksatspecials
+        % Breaks at punctuation characters . , ; ? ! and / need catcode=\active
+        \OriginalVerbatim[#1,codes*=\Wrappedbreaksatpunct]%
+    }
+    \makeatother
+
+    % Exact colors from NB
+    \definecolor{incolor}{HTML}{303F9F}
+    \definecolor{outcolor}{HTML}{D84315}
+    \definecolor{cellborder}{HTML}{CFCFCF}
+    \definecolor{cellbackground}{HTML}{F7F7F7}
+
+    % prompt
+    \makeatletter
+    \newcommand{\boxspacing}{\kern\kvtcb@left@rule\kern\kvtcb@boxsep}
+    \makeatother
+    \newcommand{\prompt}[4]{
+        {\ttfamily\llap{{\color{#2}[#3]:\hspace{3pt}#4}}\vspace{-\baselineskip}}
+    }
+    
+
+    
+    % Prevent overflowing lines due to hard-to-break entities
+    \sloppy
+    % Setup hyperref package
+    \hypersetup{
+      breaklinks=true,  % so long urls are correctly broken across lines
+      colorlinks=true,
+      urlcolor=urlcolor,
+      linkcolor=linkcolor,
+      citecolor=citecolor,
+      }
+    % Slightly bigger margins than the latex defaults
+    
+    \geometry{verbose,tmargin=1in,bmargin=1in,lmargin=1in,rmargin=1in}
+    
+    
+
+\begin{document}
+    
+    \maketitle
+    
+    
+
+    
+    \section{Homework 3}\label{homework-3}
+
+    \section{Finite difference methods.}\label{finite-difference-methods.}
+
+    \subsection{Explicit Finite
+Difference}\label{explicit-finite-difference}
+
+    Our goal is to value European options with \(V(S, t)\).
+
+    \subsubsection{Solving the PDE}\label{solving-the-pde}
+
+    We will follow the Black-Scholes assumption that the underlying stock
+follows this stochastic process:
+
+\[dS_t = rS_t dt + \sigma S_t dW_t\]
+
+Then the price of the European option must satisfy this PDE:
+
+\[\frac{\partial V}{\partial t} + rS \frac{\partial V}{\partial S} + \frac{1}{2} \sigma^2 S^2 \frac{\partial^2 V}{\partial S^2} - rV = 0\]
+
+    In order to solve this PDE, we must have constant coefficients. We can
+do this through a change of variable, modeling returns instead of the
+actual stock price.
+
+\[S = e^x\] \[x = \ln S\]
+
+Then we will get a new value equation \(u\) where
+\[V(S, t) = V(e^x, t) = u(x, t)\]
+\[\frac{\partial V}{\partial t}(t, S) = \frac{\partial u}{\partial t}(t, x)\]
+
+And using Ito's lemma, our original Black-Scholes PDE becomes
+
+\[\frac{\partial u}{\partial t} + \nu\frac{\partial u}{\partial x} + \frac{1}{2}\sigma^2 \frac{\partial^2 u}{\partial x^2} - ru = 0\]
+
+where
+
+\[\nu = r - \frac{\sigma^2}{2}\]
+
+    Merton (1973) showed that this PDE, like the heat equation, can be
+solved analytically and used to value options through the famous
+Black-Scholes equation. But we can also solve it via a numerical method,
+the \textbf{explicit finite difference} method.
+
+    \subsubsection{Discretizing the Domain}\label{discretizing-the-domain}
+
+    This process involves discretizing this equation, and solving it
+backwards from the payoff at maturity \(T\).
+
+This begins by discretizing our domain.
+
+Our domain is \(t \in [0, T]\) and \(x \in (-\infty, \infty)\).
+
+We will discretize \(t\) into \(n + 1\) points like so:
+\[\Delta t = \frac{T}{n}\]
+\[t = \{0, \Delta t, 2 \Delta t, \ldots, n \Delta t\}\]
+
+For \(x\), we must set some large boundary instead of using \(\infty\),
+which we will define as \(N\). Therefore we will have \(2N + 1\) points
+like so:
+\[x = \{-N \Delta x, (-N + 1) \Delta x, \ldots, 0, \Delta x, \ldots, N \Delta x\}\]
+
+The value of \(\Delta x\) is technically arbitrary. However, in order
+for this process to converge, \(\Delta x\) must follow
+
+\[\Delta x \geq \sigma \sqrt{3 \Delta t}\]
+
+The time complexity of the explicit algorithm is
+\(O(\Delta x^2 + \Delta t)\). Since we want to minimize the time
+complexity, the best choice of \(\Delta x\) is in practice always
+\(\sigma \sqrt{3\Delta t}\).
+
+    \subsubsection{Discretizing the
+Derivatives}\label{discretizing-the-derivatives}
+
+    For the explicit finite difference method, there are four points we will
+need. These are - \(u_{i+1, j+1}\) - \(u_{i+1, j}\) - \(u_{i+1, j-1}\) -
+\(u_{i, j}\)
+
+And there are three derivatives we are trying to calculate
+\[\frac{\partial u}{\partial t}, \frac{\partial u}{\partial x}, \frac{\partial^2 u}{\partial x^2}\]
+
+We can use the limit equation for derivatives to describe finite
+difference for the first-order derivatives.
+
+\[u'(x) = \lim_{h \rightarrow 0}  \frac{u(x + h) - u(x)}{h}\]
+
+And we can also use Taylor expansion to get the limit equation for
+second-order derivatives in terms of the first-order equation.
+
+\[u''(x) = \lim_{h \rightarrow 0} \frac{u(x+h) - 2u(x) + u(x-h)}{h^2}\]
+
+    The derivative with respect to \(t\) most neatly fits into this
+paradigm. If we define \[h = \Delta t\] then we get
+\[\frac{\partial u}{\partial t} = \frac{u_{i+1, j} - u_{i, j}}{\Delta t}\]
+
+    For the first-order derivative with respect to \(x\), because we are
+calculating these values with respect to \(u_{i, j}\), we don't want to
+bias it up or down, so we will use the above and below point and then
+average them. \[h = \Delta x\]
+\[\frac{\partial u}{\partial x} = \frac{u_{i+1,j+1} - u_{i+1,j-1}}{2\Delta x}\]
+
+    And for the second-order derivative with respect to \(x\) we will use
+the corresponding limit equation.
+
+\[h = \Delta x\]
+\[\frac{\partial^2 u}{\partial x^2} = \frac{u_{i+1,j+1} - 2u_{i+1,j} + u_{i+1,j-1}}{\Delta x^2}\]
+
+    \subsubsection{The Discretized Equation}\label{the-discretized-equation}
+
+    \[\frac{\partial u}{\partial t} + \nu\frac{\partial u}{\partial x} + \frac{1}{2}\sigma^2 \frac{\partial^2 u}{\partial x^2} - ru = 0\]
+
+    Substituting back these finite differences into our original equation,
+we get
+
+\[\frac{u_{i+1, j} - u_{i, j}}{\Delta t} + \nu \frac{u_{i+1,j+1} - u_{i+1,j-1}}{2\Delta x} + \frac{1}{2} \sigma^2 \frac{u_{i+1,j+1} - 2u_{i+1,j} + u_{i+1,j-1}}{\Delta x^2} - r u_{i+1, j} = 0\]
+
+    Expand out the equation.
+\[\frac{u_{i+1, j}}{\Delta t} - \frac{u_{i, j}}{\Delta t} + \frac{\nu}{2\Delta x} u_{i+1, j+1} - \frac{\nu}{2\Delta x} u_{i+1, j-1} + \frac{\sigma^2}{2\Delta x^2} u_{i+1, j+1} - \frac{\sigma^2}{\Delta x^2} u_{i+1, j} + \frac{\sigma^2}{2 \Delta x^2} h - ru_{i+1, j} = 0\]
+
+Rearrange to solve for \(u_{i, j}\).
+\[u_{i, j} = \Delta t \left( \frac{\sigma^2}{2\Delta x^2} u_{i+1, j+1} + \frac{\nu}{2\Delta x} u_{i+1, j+1} \right) + \Delta t \left( \frac{\sigma^2}{2\Delta x^2} u_{i+1, j-1} - \frac{\nu}{2\Delta x} u_{i+1, j-1} \right) + u_{i+1, j} - \Delta t \frac{\sigma^2}{\Delta x^2} u_{i+1, j} - ru_{i+1, j} \Delta t\]
+
+Factor out the probabilities.
+\[u_{i, j} = p_u u_{i+1, j+1} + p_m u_{i+1, j} + p_d u_{i+1, j-1}\]
+
+\[p_u = \Delta t \left( \frac{\sigma^2}{2\Delta x^2} + \frac{\nu}{2\Delta x} \right)\]
+\[p_m = 1 - \Delta t \frac{\sigma^2}{\Delta x^2} - r \Delta t\]
+\[p_d = \Delta t \left( \frac{\sigma^2}{2\Delta x^2} - \frac{\nu}{2\Delta x} \right)\]
+
+    \subsubsection{Valuation}\label{valuation}
+
+    To carry out the valuation, we will follow these steps.
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Initialize the following constants:
+
+  \begin{itemize}
+  \tightlist
+  \item
+    \(K\)
+  \item
+    \(T\)
+  \item
+    \(S\)
+  \item
+    \(\sigma\)
+  \item
+    \(r\)
+  \item
+    \(\delta\)
+  \item
+    \(n\)
+  \item
+    \(N\)
+  \item
+    \(dt\)
+  \item
+    \(dx\)
+  \item
+    \(\nu\)
+  \item
+    \(p_u\)
+  \item
+    \(p_m\)
+  \item
+    \(p_d\)
+  \end{itemize}
+\item
+  Create a vector of asset prices at maturity.
+\item
+  Initialize option values at maturity based on the option payoff
+  formula.
+\item
+  Step backwards through the lattice by solving the discretized equation
+  for each point in each time step based on the three points in the next
+  time step.
+\item
+  For the boundary conditions, initialize them based on the option type.
+\item
+  Return the value at (0, 0)
+\end{enumerate}
+
+    \subsection{Implicit Finite
+Difference}\label{implicit-finite-difference}
+
+    Use the same discretized equation for explicit finite difference, but
+calculate the derivative with respect to \(x\) at time step \(i\) not
+\(i + 1\).
+
+\[\frac{u_{i+1, j} - u_{i, j}}{\Delta t} + \nu \frac{u_{i,j+1} - u_{i,j-1}}{2\Delta x} + \frac{1}{2} \sigma^2 \frac{u_{i,j+1} - 2u_{i,j} + u_{i,j-1}}{\Delta x^2} - r u_{i, j} = 0\]
+
+    We can perform the same steps of expansion and factoring.
+
+    Expand out the equation.
+\[\frac{u_{i+1, j}}{\Delta t} - \frac{u_{i, j}}{\Delta t} + \frac{\nu}{2\Delta x} u_{i, j+1} - \frac{\nu}{2\Delta x} u_{i, j-1} + \frac{\sigma^2}{2\Delta x^2} u_{i, j+1} - \frac{\sigma^2}{\Delta x^2} u_{i, j} + \frac{\sigma^2}{2 \Delta x^2} h - ru_{i, j} = 0\]
+
+Rearrange to solve for \(u_{i, j}\).
+\[u_{i + 1, j} = \Delta t \left( -\frac{\sigma^2}{2\Delta x^2} u_{i, j+1} - \frac{\nu}{2\Delta x} u_{i, j+1} \right) + \Delta t \left( -\frac{\sigma^2}{2\Delta x^2} u_{i, j-1} + \frac{\nu}{2\Delta x} u_{i, j-1} \right) + u_{i, j} + \Delta t \frac{\sigma^2}{\Delta x^2} u_{i, j} - ru_{i, j} \Delta t\]
+
+Factor out the constants (not probabilities!).
+\[u_{i + 1, j} = A u_{i, j+1} + B u_{i, j} + C u_{i, j-1}\]
+
+\[A = -\frac{1}{2} \Delta t \left( \frac{\sigma^2}{\Delta x^2} + \frac{\nu}{\Delta x} \right)\]
+\[B = 1 + \Delta t \frac{\sigma^2}{\Delta x^2} + r \Delta t\]
+\[C = -\frac{1}{2} \Delta t \left( \frac{\sigma^2}{\Delta x^2} - \frac{\nu}{\Delta x} \right)\]
+
+    We can construct a system of equations that represents the time step
+from \(t_i\) to \(t_{i + 1}\). For each column \(V\) which has
+\(2N + 1\) rows,
+
+\[A V_{i, N - 1} + B V_{i, N - 1} + C V_{i, N - 1} = V_{i, N - 1}\]
+\[A V_{i, N - 2} + B V_{i, N - 2} + C V_{i, N - 2} = V_{i, N - 2}\]
+\ldots{}
+\[A V_{i, -N + 1} + B V_{i, -N + 1} + C V_{i, -N + 1} = V_{i, -N + 1}\]
+
+Note here that because the value of each point depends on the past above
+and below points, these equations do not work for the boundaries at the
+top and bottom.
+
+    For these, we set the boundary condition based on the delta of the
+option as the stock price goes to infinity/zero. The finite difference
+of the delta here is calculated at the top as
+\[V_{i, N} - V_{i, N - 1} = \lambda_U\] and at the bottom as
+\[V_{i, -N + 1} - V_{i, -N} = \lambda_L\]
+
+The value of \(\lambda_U\)/\(\lambda_L\) depends on the option type.
+
+For a call option, as the stock price approaches infinity, the payoff
+from the option just keeps adding on the stock price, giving them a
+linear relationship with a delta of 1.
+\[\lambda_{Uc} = S \uparrow \infty: \frac{\partial V_c}{\partial S} = 1\]
+And as the stock price approaches zero, the call will never be exercised
+and the payoff doesn't change, giving a delta of 0.
+\[\lambda_{Lc} = S \downarrow 0: \frac{\partial V_c}{\partial S} = 0\]
+
+For a put option, as the stock price approaches infinity, the put will
+never be exercised giving a delta of 0.
+\[\lambda_{Up} = S \uparrow \infty: \frac{\partial V_p}{\partial S} = 0\]
+
+And as the stock price approaches 0, the put payoff will have the same
+linear relationship with the call, but it increases when the price
+decreases, making the delta -1.
+
+\[\lambda_{Dp} = S \downarrow 0: \frac{\partial V_p}{\partial S} = -1\]
+
+    Putting all of this together, we can construct a matrix equation of form
+\(Ax = b\) to represent this systems of equations.
+
+\[\begin{bmatrix} 1 & - 1 & 0 & 0 & 0 & \ldots & 0 \\ A & B & C & 0 & 0 & \ldots & 0 \\ 0 & A & B & C & 0 & \ldots & 0 \\ \vdots & \ddots & \ddots & \ddots & \ddots & \ddots & \vdots \\ 0 & 0 & \ddots & \ddots & B & C & 0 \\ 0 & 0 & 0 & \ddots & A & B & C \\ 0 & 0 & 0 & \ldots & 0 & 1 & -1 \end{bmatrix} \begin{bmatrix} V_{i, N} \\ V_{i, N - 1} \\ V_{i, N - 2} \\ \vdots \\ \vdots \\ V_{i, -N + 1} \\ V_{i, -N} \end{bmatrix} = \begin{bmatrix} \lambda_U \\ V_{i+1,N-1} \\ V_{i+1, N-2} \\ \vdots \\ \vdots \\ V_{i+1,-N+1} \\ \lambda_L \end{bmatrix}\]
+
+Normally, this calculation would be done by inverting the matrix.
+However, for sufficiently large \(N\), this becomes computationally
+infeasible. Fortunately, there is a recurrence procedure for calculating
+tridiagonal matrices of these forms in \(O(n)\).
+
+    The procedure is derived in the following way.
+
+For simplicity of notation, I will describe \(V_{i, j}\) by \(x_j\) and
+\(V_{i, + 1, j}\) as \(y_j\) and index from 1 to \(n\).
+
+The first equation is \[x_1 - x_2 = y_1\] which we can rearrange to
+solve for \(x_1\) in terms of \(x_2\) \[x_1 = y_1 + x_2\] I can perform
+a change of variable here where I define \[D_1 = y_1\] \[E_1 = 1.0\] so
+that \[x_1 = D_1 + E_1 x_2\] This is the initial condition for the
+recurrence, as we will see.
+
+The second equation is \[Ax_1 + Bx_2 + Cx_3 = y_2\] We can substitute in
+the first equation like so \[A(y_1 + x_2) + Bx_2 + Cx_3 = y_2\] and
+rearrange to solve for \(x_2\) in terms of \(x_3\)
+\[Ay_1 + Ax_2 + Bx_2 + Cx_3 = y_2\]
+\[x_2 = \frac{y_2 - Ay_1}{A + B} - \frac{C}{A + B}x_3\] Doing the same
+of change of variable, we can define
+\[D_2 = \frac{y_2 - AD_1}{AE_1 + B}\] \[E_2 = -\frac{C}{AE_1 + B}\] so
+that \[x_2 = D_2 + E_2 x_3\] We can see the same structure emerge here.
+One more example will fully illuminate it.
+
+The third equation is \[Ax_2 + Bx_3 + Cx_4 = y_3\] Substituting in the
+second equation, \[A(D_2 + E_2 x_3) + Bx_3 + Cx_4 = y_3\] Then
+rearranging to solve for \(x_3\) in terms of \(x_4\)
+\[AD_2 + AE_2 x_3 + Bx_3 + Cx_4 = y_3\]
+\[x_3 = \frac{y_3 - AD_2}{AE_2 + B} - \frac{C}{AE_2 + B}x_4\] With the
+change of variable, \[D_3 = \frac{y_3 - AD_2}{AE_2 + B}\]
+\[E_3 = -\frac{C}{AE_2 + B}\]
+
+The recurrence now becomes clear. Each equation follows this form.
+\[x_j = D_j + E_j x_{j+1}\] where
+\[D_j = \frac{y_j - AD_{j - 1}}{AE_{j - 1} + B}\]
+\[E_j = -\frac{C}{AE_{j - 1} + B}\]
+
+We have our initial condition, our recurrence, but where's our stopping
+point? The second-to-last equation, expressed in terms of \(D\) and
+\(E\), is \[x_{n-1} = D_{n-1} + E_{n-1} x_n\]
+
+And the last equation is \[x_{n-1} - x_n = y_n\] Substituting the
+previous equation into this one, we get
+\[D_{n-1} + E_{n-1} x_n - x_n = y_n\] Then rearranging to solve for
+\(x_n\) \[x_n = \frac{y_n - D_{n-1}}{E_{n-1} - 1.0}\] which is a
+complete solution.
+
+    The tridiagonal system solver procedure then follows like so:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Create vectors for \(D\) and \(E\) of size \(n\) and set their first
+  element to \(y_1\) and \(1.0\), respectively.
+\item
+  Forward-substitute the values for \(D\) and \(E\) using the \(D\) and
+  \(E\) recurrences.
+\item
+  Create a vector for \(x\) and solve for \(x_n\) directly.
+\item
+  Back-substitute each element in \(x\) through the \(x\) recurrence.
+\end{enumerate}
+
+    This solver is run at each time step in the same way that explicit
+finite difference is, and then the final option price is the value of
+\(V_{0, 0}\).
+
+    \section{Choosing Parameter Values}\label{choosing-parameter-values}
+
+    \subsection{Explicit Finite
+Difference}\label{explicit-finite-difference}
+
+    For explicit finite difference, as discussed previously, the best value
+for \(\Delta x\) is always
+
+\[\Delta x = \sigma \sqrt{3 \Delta t}\]
+
+Our order of convergence is \(O(\Delta x^2 + \Delta t)\), so our goal of
+converging to \(\epsilon\) is satisfied by
+\[\Delta x^2 + \Delta t = \epsilon\] which we can substitute and
+rearrange to find the correct value for \(\Delta t\)
+\[\sigma^2 3 \Delta t + \Delta t = \epsilon\]
+\[\Delta t = \frac{\epsilon}{1 + 3 \sigma^2}\]
+
+The value for \(n\) naturally falls out of this via
+\(n = \frac{T}{\Delta t}\) as for all these procedures. And we can
+define \(N = n\) (although I can't find a reason to do this beyond ``the
+nature of the explicit scheme'', either in Mariani \& Florescu (2019) or
+Clewlow (1998)).
+
+    \subsection{Implicit Finite
+Difference}\label{implicit-finite-difference}
+
+    The order of convergence is the same as with explicit finite difference,
+but the method is unconditionally stable and convergent. We can
+arbitrarily choose for the error to be divided equally between
+\(\Delta t\) and \(\Delta x\).
+
+\[\Delta t = \frac{\epsilon}{2}\]
+\[\Delta x = \sqrt{\frac{\epsilon}{2}}\]
+
+\(n\) is computed as before, and we choose \(N = n\) to be the same
+order of magnitude as \(n\) as suggested by Mariani \& Florescu (2019).
+(M \& F cites Clewlow (1998) for this but I can't find any source for
+that in there.)
+
+    \section{Calculation}\label{calculation}
+
+    \begin{itemize}
+\tightlist
+\item
+  Explicit Method - European Call Price: 9.72838461521403
+
+  \begin{itemize}
+  \tightlist
+  \item
+    \(n\): 11200
+  \item
+    \(N\): 11200
+  \end{itemize}
+\item
+  Explicit Method - European Put Price: 5.884952006728757
+
+  \begin{itemize}
+  \tightlist
+  \item
+    \(n\): 11200
+  \item
+    \(N\): 11200
+  \end{itemize}
+\item
+  Implicit Method - European Call Price: 9.72734157812497
+
+  \begin{itemize}
+  \tightlist
+  \item
+    \(n\): 20000
+  \item
+    \(N\): 20000
+  \end{itemize}
+\item
+  Implicit Method - European Put Price: 5.883910596683879
+
+  \begin{itemize}
+  \tightlist
+  \item
+    \(n\): 20000
+  \item
+    \(N\): 20000
+  \end{itemize}
+\end{itemize}
+
+    \section{Empirical Convergence}\label{empirical-convergence}
+
+    There was some error in my implicit finite difference code that caused
+it to fail to converge.
+
+
+    % Add a bibliography block to the postdoc
+    
+    
+    
+\end{document}

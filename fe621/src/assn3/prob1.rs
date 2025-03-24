@@ -30,12 +30,11 @@ pub struct FiniteDifference {
 }
 
 impl FiniteDifference {
-    pub fn explicit(&self) -> f64 {
+    pub fn explicit(&self, n: usize, N: usize) -> f64 {
         // precompute constants
-        let dt = self.epsilon / (1.0 + 3.0 * self.sig.powi(2));
-        let n = (self.T / dt).ceil() as usize;
-        let N = n;
+        let dt = self.T / n as f64;
         let dx = self.sig * (3.0 * dt).sqrt();
+
         let nu = self.r - self.div - 0.5 * self.sig.powi(2);
         let edx = dx.exp();
         let pu = 0.5 * dt * ((self.sig / dx).powi(2) + nu / dx);
@@ -88,19 +87,15 @@ impl FiniteDifference {
                 }
             }
         }
-        println!("Explicit finite difference:");
-        println!("n: {n}");
-        println!("N: {N}");
+        println!("EFD n: {n}");
+        println!("EFD N: {N}");
         C[(N, 0)]
     }
 
-    pub fn implicit(&self) -> f64 {
+    pub fn implicit(&self, n: usize, N: usize) -> f64 {
         // precompute constants
-        let dt = self.epsilon / 2.0;
-        let dx = (self.epsilon / 2.0).sqrt();
-        let n = (self.T / dt).ceil() as usize;
-        //let N = (3.0 * self.sig * self.T.sqrt() / dx).ceil() as usize;
-        let N = n;
+        let dt = self.T / n as f64;
+        let dx = dt.sqrt();
 
         let nu = self.r - self.div - 0.5 * self.sig.powi(2);
         let edx = dx.exp();
@@ -157,9 +152,8 @@ impl FiniteDifference {
                 }
             }
         }
-        println!("Implicit finite difference:");
-        println!("n: {n}");
-        println!("N: {N}");
+        println!("IFD n: {n}");
+        println!("IFD N: {N}");
         C[(N, 0)]
     }
 
@@ -321,15 +315,6 @@ impl FiniteDifference {
 
         C.column_mut(1).copy_from(&x);
     }
-
-    pub fn delta(&self) -> f64 {
-        let epsilon = 1e-4;
-        let v1 = self.clone();
-        let v2 = self.clone();
-        let v1 = v1.explicit();
-        let v2 = v2.explicit();
-        (v2 - v1) / epsilon
-    }
 }
 
 fn black_scholes(
@@ -359,7 +344,8 @@ fn black_scholes(
 pub fn a() -> PolarsResult<()> {
     const EPSILON: f64 = 1e-4;
 
-    let fd = FiniteDifference {
+    // e.
+    let call_fd: FiniteDifference = FiniteDifference {
         option_type: OptionType::Call,
         option_style: OptionStyle::European,
         K: 100.0,
@@ -370,11 +356,67 @@ pub fn a() -> PolarsResult<()> {
         div: 0.02,
         epsilon: EPSILON,
     };
-    let v = fd.implicit();
-    let bs_value = black_scholes(fd.option_type, fd.S, fd.K, fd.T, fd.r, fd.sig, fd.div);
-    println!("Finite Difference Value: {v}");
-    println!("Black-Scholes Value: {bs_value}");
+    let put_fd = FiniteDifference {
+        option_type: OptionType::Put,
+        ..call_fd
+    };
 
-    println!("Hello, world!");
+    // let dt = EPSILON / (1.0 + 3.0 * call_fd.sig.powi(2));
+    // let n = (call_fd.T / dt).ceil() as usize;
+    // let N = n;
+
+    // let call_price_explicit = call_fd.explicit(n, N);
+    // println!("Explicit Method - European Call Price: {call_price_explicit}");
+
+    // let put_price_explicit = put_fd.explicit(n, N);
+    // println!("Explicit Method - European Put Price: {put_price_explicit}");
+
+    // let dt = (EPSILON / 2.0).sqrt();
+    // let n = (call_fd.T / dt).ceil() as usize;
+    // let N = n;
+
+    // let call_price_implicit = call_fd.implicit(n, N);
+    // println!("Implicit Method - European Call Price: {call_price_implicit}");
+
+    // let put_price_implicit = put_fd.implicit(n, N);
+    // println!("Implicit Method - European Put Price: {put_price_implicit}");
+
+    // f.
+    let mut dx = 0.1;
+    let mut dt = 0.1;
+    let mut n = 10;
+    let mut N = 10;
+
+    let mut efd_error = f64::MAX;
+    let mut ifd_error = f64::MAX;
+
+    while efd_error > EPSILON || ifd_error > EPSILON {
+        let call_price_explicit = call_fd.explicit(n, N);
+        let call_price_implicit = call_fd.implicit(n, N);
+        let bs_value = black_scholes(
+            call_fd.option_type,
+            call_fd.S,
+            call_fd.K,
+            call_fd.T,
+            call_fd.r,
+            call_fd.sig,
+            call_fd.div,
+        );
+
+        efd_error = (call_price_explicit - bs_value).abs();
+        ifd_error = (call_price_implicit - bs_value).abs();
+
+        println!(
+            "dx: {dx}, dt: {dt}, n: {n}, N: {N}, EFD Error: {efd_error}, IFD Error: {ifd_error}"
+        );
+
+        dx /= 2.0;
+        dt /= 2.0;
+        n *= 2;
+        N *= 2;
+    }
+
+    println!("Final dx: {dx}, dt: {dt}, n: {n}, N: {N}");
+    println!("Final EFD Error: {efd_error}, Final IFD Error: {ifd_error}");
     Ok(())
 }
