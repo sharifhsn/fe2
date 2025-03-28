@@ -687,15 +687,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "43da5946c66ffcc7745f48db692ffbb10a83bfe0afd96235c5c2a4fb23994929"
 
 [[package]]
-name = "cubic_spline"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "38c63da2494d1333c977518cc40874f5ea0361538163355993544c1e4115abf3"
-dependencies = [
- "wasm-bindgen",
-]
-
-[[package]]
 name = "darling"
 version = "0.20.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -935,7 +926,6 @@ dependencies = [
  "argmin",
  "argmin-math",
  "base64",
- "cubic_spline",
  "image 0.25.5",
  "itertools 0.14.0",
  "nalgebra 0.33.2",
