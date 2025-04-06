@@ -6,7 +6,6 @@ use argmin::{
     solver::neldermead::NelderMead,
 };
 
-use crate::assn3::prob1::P;
 const BP: f64 = 0.0001;
 
 struct ProbSystem {
@@ -43,13 +42,13 @@ impl CostFunction for ProbSystem {
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum OptionStyle {
     European,
-    American
+    American,
 }
 
 #[derive(Clone, Copy)]
 enum OptionType {
     Call,
-    Put
+    Put,
 }
 
 #[derive(Clone, Copy)]
@@ -93,7 +92,7 @@ impl VasicekBinomialTree {
         ];
         let solver = NelderMead::new(simplex);
 
-        let edr = |r: f64| r0 + k * (theta - r) * dt;
+        let edr = |r: f64| r + k * (theta - r) * dt;
         let mut expectations = vec![r0];
         for i in 1..=n {
             expectations.push(edr(expectations[i - 1]));
@@ -139,6 +138,8 @@ impl VasicekBinomialTree {
                 tree[(j, i)] = r;
             }
         }
+        println!("{}", tree);
+        println!("{}", ptree);
 
         Self {
             r0,
@@ -154,7 +155,11 @@ impl VasicekBinomialTree {
     }
 
     fn terminal_rates(&self) -> Vec<f64> {
-        self.tree.column(self.n).iter().cloned().collect::<Vec<f64>>()
+        self.tree
+            .column(self.n)
+            .iter()
+            .cloned()
+            .collect::<Vec<f64>>()
     }
 
     fn zcb(&self, zcb: Zcb) -> DMatrix<f64> {
@@ -169,14 +174,15 @@ impl VasicekBinomialTree {
                 let r = self.tree[(j, i)];
                 let pu = self.ptree[(2 * j, i + 1)];
                 let pd = self.ptree[(2 * j + 1, i + 1)];
-                bond_tree[(j, i)] = (-r * self.dt).exp() * (pu * bond_tree[(j, i + 1)] + pd * bond_tree[(j + 1, i + 1)]);
+                bond_tree[(j, i)] = (-r * self.dt).exp()
+                    * (pu * bond_tree[(j, i + 1)] + pd * bond_tree[(j + 1, i + 1)]);
             }
         }
 
         bond_tree
     }
 
-    fn zcb_option(&self, zcb_option: ZcbOption) -> f64 {
+    fn zcb_option(&self, zcb_option: ZcbOption) -> DMatrix<f64> {
         let mut option_tree = DMatrix::zeros(self.n + 1, self.n + 1);
         let n = (zcb_option.T / self.dt) as usize;
         let bond_tree = self.zcb(zcb_option.zcb);
@@ -194,19 +200,21 @@ impl VasicekBinomialTree {
                 let pu = self.ptree[(2 * j, i + 1)];
                 let pd = self.ptree[(2 * j + 1, i + 1)];
 
-                option_tree[(j, i)] = (-r * self.dt).exp() * (pu * option_tree[(j, i + 1)] + pd * option_tree[(j + 1, i + 1)]);
+                option_tree[(j, i)] = (-r * self.dt).exp()
+                    * (pu * option_tree[(j, i + 1)] + pd * option_tree[(j + 1, i + 1)]);
 
                 if zcb_option.option_style == OptionStyle::American {
+                    let B = bond_tree[(j, i)];
                     let payoff = match zcb_option.option_type {
-                        OptionType::Call => (r - zcb_option.K).max(0.0),
-                        OptionType::Put => (zcb_option.K - r).max(0.0),
+                        OptionType::Call => (B - zcb_option.K).max(0.0),
+                        OptionType::Put => (zcb_option.K - B).max(0.0),
                     };
                     option_tree[(j, i)] = payoff.max(option_tree[(j, i)]);
                 }
             }
         }
 
-        option_tree[(0, 0)]
+        option_tree
     }
 }
 
@@ -224,13 +232,26 @@ pub fn a() {
     let r0 = 0.05121;
     let theta = 0.15339;
 
-    // let tree = VasicekBinomialTree {
-    //     r0,
-    //     theta,
-    //     k,
-    //     sigma,
-    //     dt,
-    //     T,
-    // };
-    // println!("{:?}", tree.terminal_rates());
+    let L = 100.0;
+    let zcb = Zcb { L, T };
+    let zcb_eur_option = ZcbOption {
+        zcb,
+        K: 98.0,
+        option_type: OptionType::Call,
+        option_style: OptionStyle::European,
+        T: 3.0 / 6.0,
+    };
+    let zcb_amr_option = ZcbOption {
+        zcb,
+        K: 98.0,
+        option_type: OptionType::Call,
+        option_style: OptionStyle::American,
+        T: 3.0 / 6.0,
+    };
+
+    let tree = VasicekBinomialTree::new(r0, theta, k, sigma, dt, T);
+    println!("{:?}", tree.terminal_rates());
+    println!("{}", tree.zcb(zcb)[(0, 0)]);
+    println!("{}", tree.zcb_option(zcb_eur_option)[(0, 0)]);
+    println!("{}", tree.zcb_option(zcb_amr_option)[(0, 0)]);
 }
