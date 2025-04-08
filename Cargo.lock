@@ -900,6 +900,8 @@ dependencies = [
  "plotly",
  "plotters",
  "polars",
+ "rand 0.9.0",
+ "rand_distr 0.5.1",
  "rayon",
  "serde_json",
  "statrs",
