@@ -26,10 +26,7 @@ pub fn a() -> PolarsResult<DataFrame> {
     df.with_column(Column::new(
         "r curve".into(),
         &[
-            Series::new(
-                "".into(),
-                &[0.09, 0.095],
-            ),
+            Series::new("".into(), &[0.09, 0.095]),
             Series::new("".into(), &[0.025]),
         ],
     ))?;
@@ -41,27 +38,20 @@ pub fn a() -> PolarsResult<DataFrame> {
     // let K = col("K") + (col("coupon payment"));
     let sigma = col("sigma");
     let r_m = col("r_m");
-    let payment_frequency =
-        col("payment frequency");
+    let payment_frequency = col("payment frequency");
     let coupon_payment = col("coupon payment");
-    let time_to_next_payment =
-        col("time to next payment");
+    let time_to_next_payment = col("time to next payment");
     let option_type = col("option type");
     let r_curve = col("r curve");
 
-    let time_of_last_payment: Expr =
-        time_to_next_payment.clone()
-            + (((T.clone()
-                - time_to_next_payment.clone())
-                / payment_frequency.clone())
+    let time_of_last_payment: Expr = time_to_next_payment.clone()
+        + (((T.clone() - time_to_next_payment.clone()) / payment_frequency.clone())
             .floor()
             .cast(DataType::Float64)
-                * payment_frequency.clone());
+            * payment_frequency.clone());
     let dirty_K = K.clone()
-        + (coupon_payment.clone()
-            / payment_frequency.clone())
-            * (T.clone()
-                - time_of_last_payment.clone());
+        + (coupon_payment.clone() / payment_frequency.clone())
+            * (T.clone() - time_of_last_payment.clone());
 
     // calculate sum of coupon payments I
     let I = map_multiple(
@@ -118,65 +108,41 @@ pub fn a() -> PolarsResult<DataFrame> {
 
     let P = (-r_m.clone() * T.clone()).exp();
 
-    let F_B =
-        (B_0.clone() - I.clone()) / P.clone();
+    let F_B = (B_0.clone() - I.clone()) / P.clone();
 
     println!("This is the forward bond price:");
     // let df = df.lazy().select([F_B.clone()]).collect()?;
     // println!("{df}");
 
-    let d_1 = ((F_B.clone() / K.clone()).log(E)
-        + sigma.clone().pow(2) * T.clone()
-            / lit(2.0))
+    let d_1 = ((F_B.clone() / K.clone()).log(E) + sigma.clone().pow(2) * T.clone() / lit(2.0))
         / (sigma.clone() * T.clone().sqrt());
-    let d_2 = d_1.clone()
-        - sigma.clone() * T.clone().sqrt();
+    let d_2 = d_1.clone() - sigma.clone() * T.clone().sqrt();
 
-    let c = P.clone()
-        * (F_B.clone() * N(d_1.clone())
-            - K.clone() * N(d_2.clone()));
-    let p = P.clone()
-        * (K.clone() * N(-d_2.clone())
-            - F_B.clone() * N(-d_1.clone()));
+    let c = P.clone() * (F_B.clone() * N(d_1.clone()) - K.clone() * N(d_2.clone()));
+    let p = P.clone() * (K.clone() * N(-d_2.clone()) - F_B.clone() * N(-d_1.clone()));
 
-    let option_price = (when(
-        option_type.clone().eq(lit("call")),
-    )
-    .then(c.clone())
-    .otherwise(p.clone()))
+    let option_price = (when(option_type.clone().eq(lit("call")))
+        .then(c.clone())
+        .otherwise(p.clone()))
     .alias("clean option price");
 
     // recalculate d1, d2, c, and p based on dirty_K
-    let dirty_d_1 =
-        ((F_B.clone() / dirty_K.clone()).log(E)
-            + sigma.clone().pow(2) * T.clone()
-                / lit(2.0))
-            / (sigma.clone() * T.clone().sqrt());
-    let dirty_d_2 = dirty_d_1.clone()
-        - sigma.clone() * T.clone().sqrt();
-    let dirty_c = P.clone()
-        * (F_B.clone() * N(dirty_d_1.clone())
-            - dirty_K.clone()
-                * N(dirty_d_2.clone()));
-    let dirty_p = P.clone()
-        * (dirty_K.clone()
-            * N(-dirty_d_2.clone())
-            - F_B.clone()
-                * N(-dirty_d_1.clone()));
-    let dirty_option_price = (when(
-        option_type.clone().eq(lit("call")),
-    )
-    .then(dirty_c.clone())
-    .otherwise(dirty_p.clone()))
+    let dirty_d_1 = ((F_B.clone() / dirty_K.clone()).log(E)
+        + sigma.clone().pow(2) * T.clone() / lit(2.0))
+        / (sigma.clone() * T.clone().sqrt());
+    let dirty_d_2 = dirty_d_1.clone() - sigma.clone() * T.clone().sqrt();
+    let dirty_c =
+        P.clone() * (F_B.clone() * N(dirty_d_1.clone()) - dirty_K.clone() * N(dirty_d_2.clone()));
+    let dirty_p =
+        P.clone() * (dirty_K.clone() * N(-dirty_d_2.clone()) - F_B.clone() * N(-dirty_d_1.clone()));
+    let dirty_option_price = (when(option_type.clone().eq(lit("call")))
+        .then(dirty_c.clone())
+        .otherwise(dirty_p.clone()))
     .alias("dirty option price");
 
     let df = df
         .lazy()
-        .select([
-            name,
-            option_price,
-            dirty_option_price,
-        ])
+        .select([name, option_price, dirty_option_price])
         .collect()?;
     Ok(df)
     // 10.1252 = cash

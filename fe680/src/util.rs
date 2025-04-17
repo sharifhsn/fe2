@@ -11,12 +11,7 @@ pub fn N(e: Expr) -> Expr {
                 s.f64()
                     .unwrap()
                     .into_iter()
-                    .map(|ca| {
-                        ca.map(|f| {
-                            statrs::distribution::Normal::standard()
-                                .cdf(f)
-                        })
-                    })
+                    .map(|ca| ca.map(|f| statrs::distribution::Normal::standard().cdf(f)))
                     .collect::<Vec<_>>(),
             )))
         },

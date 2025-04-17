@@ -23,64 +23,33 @@ pub fn a() -> PolarsResult<DataFrame> {
     let m = col("m");
     let T = col("T");
     let s_k = col("s_k");
-    let yield_curve_compounding =
-        col("yield curve compounding");
+    let yield_curve_compounding = col("yield curve compounding");
 
-    let s_0 = when(
-        yield_curve_compounding
-            .clone()
-            .eq(lit("continuous")),
-    )
-    .then(
-        ((yield_curve.clone() * m.clone()).exp()
-            - lit(1.0))
-            / m.clone(),
-    )
-    .otherwise(yield_curve.clone());
+    let s_0 = when(yield_curve_compounding.clone().eq(lit("continuous")))
+        .then(((yield_curve.clone() * m.clone()).exp() - lit(1.0)) / m.clone())
+        .otherwise(yield_curve.clone());
 
     let A = map_multiple(
         move |cols| match cols {
             [b, c, d, e, f] => {
-                let (b, c, d, e, f) = (
-                    b.clone(),
-                    c.clone(),
-                    d.clone(),
-                    e.clone(),
-                    f.clone(),
-                );
+                let (b, c, d, e, f) = (b.clone(), c.clone(), d.clone(), e.clone(), f.clone());
 
                 let T = b.f64()?;
                 let n = c.f64()?;
-                let m =
-                    d.f64()?;
+                let m = d.f64()?;
                 let yield_curve = e.f64()?;
                 let yield_curve_compounding = f.str()?;
 
-                let res: Float64Chunked = izip!(
-                    T,
-                    n,
-                    m,
-                    yield_curve,
-                    yield_curve_compounding,
-                )
-                .map(|(T, n, m, r, s)| {
-                    match (T, n, m, r, s) {
-                        (
-                            Some(T),
-                            Some(n),
-                            Some(m),
-                            Some(r),
-                            Some(s)
-                        ) => {
-                            let num_payments =
-                                (n / m).floor() as usize;
-                            Some(m *
-                                (1..=num_payments)
+                let res: Float64Chunked = izip!(T, n, m, yield_curve, yield_curve_compounding,)
+                    .map(|(T, n, m, r, s)| match (T, n, m, r, s) {
+                        (Some(T), Some(n), Some(m), Some(r), Some(s)) => {
+                            let num_payments = (n / m).floor() as usize;
+                            Some(
+                                m * (1..=num_payments)
                                     .map(|i| {
                                         let t = T + m * (i as f64);
                                         if s == "continuous" {
-                                            (-r * t)
-                                            .exp()
+                                            (-r * t).exp()
                                         } else {
                                             1.0 / (1.0 + r).powf(t)
                                         }
@@ -89,15 +58,13 @@ pub fn a() -> PolarsResult<DataFrame> {
                             )
                         }
                         _ => None,
-                    }
-                })
-                .collect();
+                    })
+                    .collect();
 
                 Ok(Some(res.into_column()))
             }
             _ => Err(PolarsError::ComputeError(
-                "Expected exactly 5 columns"
-                    .into(),
+                "Expected exactly 5 columns".into(),
             )),
         },
         &[
@@ -111,32 +78,19 @@ pub fn a() -> PolarsResult<DataFrame> {
     )
     .alias("A");
 
-    let d_1 = (((s_0.clone() / s_k.clone()
-        - lit(1.0))
-    .log1p()
-        + sigma.clone().pow(2) * T.clone()
-            / lit(2.0))
+    let d_1 = (((s_0.clone() / s_k.clone() - lit(1.0)).log1p()
+        + sigma.clone().pow(2) * T.clone() / lit(2.0))
         / (sigma.clone() * T.clone().sqrt()))
     .alias("d_1");
-    let d_2 = (d_1.clone()
-        - sigma.clone() * T.clone().sqrt())
-    .alias("d_2");
+    let d_2 = (d_1.clone() - sigma.clone() * T.clone().sqrt()).alias("d_2");
 
-    let swaption_price = (L.clone()
-        * A.clone()
-        * (s_0.clone() * N(d_1.clone())
-            - s_k.clone() * N(d_2.clone())))
-    .alias("swaption price");
+    let swaption_price =
+        (L.clone() * A.clone() * (s_0.clone() * N(d_1.clone()) - s_k.clone() * N(d_2.clone())))
+            .alias("swaption price");
 
     let df = df
         .lazy()
-        .select([
-            name,
-            A,
-            d_1,
-            d_2,
-            swaption_price,
-        ])
+        .select([name, A, d_1, d_2, swaption_price])
         .collect()?;
     Ok(df)
 }

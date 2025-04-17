@@ -34,44 +34,25 @@ pub fn a() -> PolarsResult<DataFrame> {
         )
         .otherwise(
             // else discrete compounding
-            lit(1.0)
-                / (lit(1.0)
-                    + r.clone() * m.clone())
-                .pow(T.clone() / m.clone()),
+            lit(1.0) / (lit(1.0) + r.clone() * m.clone()).pow(T.clone() / m.clone()),
         );
     // ((lit(-1.0)
     // + tau_2.clone().pow(2))
     // / tau_2.clone())
     let conv1 = r.clone()
-        - r.clone().pow(2)
-            * sigma.clone().pow(2)
-            * T.clone()
-            * (-tau_1.clone())
-            / lit(2.0);
+        - r.clone().pow(2) * sigma.clone().pow(2) * T.clone() * (-tau_1.clone()) / lit(2.0);
     let conv2 = r.clone()
-        - r.clone().pow(2)
-            * sigma.clone().pow(2)
-            * T.clone()
-            * (-tau_2.clone())
-            / lit(2.0);
+        - r.clone().pow(2) * sigma.clone().pow(2) * T.clone() * (-tau_2.clone()) / lit(2.0);
 
-    let convexity_1: Expr = (r.clone().pow(2)
-        * sigma.clone().pow(2)
-        * tau_1.clone()
-        * T.clone())
+    let convexity_1: Expr = (r.clone().pow(2) * sigma.clone().pow(2) * tau_1.clone() * T.clone())
         / (lit(1.0) + r.clone() * tau_1.clone());
 
-    let convexity_2: Expr = (r.clone().pow(2)
-        * sigma.clone().pow(2)
-        * tau_2.clone()
-        * T.clone())
+    let convexity_2: Expr = (r.clone().pow(2) * sigma.clone().pow(2) * tau_2.clone() * T.clone())
         / (lit(1.0) + r.clone() * tau_2.clone());
 
     // yield curve is flat, so the r term is elided
-    let V = (P.clone()
-        * L.clone()
-        * (conv1.clone() - conv2.clone()))
-    .alias("Value after convexity adjustment");
+    let V = (P.clone() * L.clone() * (conv1.clone() - conv2.clone()))
+        .alias("Value after convexity adjustment");
     let df = df.lazy().select([V]).collect()?;
     Ok(df)
 }
