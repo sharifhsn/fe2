@@ -26,9 +26,7 @@ impl CreditDefaultSwap {
         );
 
         // PV premium
-        let pv_prem: f64 = (1..self.T.len())
-            .map(|i| P(self.T[i]) * Q[i])
-            .sum();
+        let pv_prem: f64 = (1..self.T.len()).map(|i| P(self.T[i]) * Q[i]).sum();
 
         // PV protection
         let pv_protection: f64 = (1..self.T.len())
@@ -91,7 +89,11 @@ pub fn a() -> Result<(), Box<dyn std::error::Error>> {
     } else {
         println!("Failed to find hazard rate.");
     }
-    println!("To verify proportionality: for lambda 2 / lambda1 = {}, 1/(1 - R2) / 1/(1 - R) = {}", hazard2 / hazard, (1.0 - R) / (1.0 - R2));
+    println!(
+        "To verify proportionality: for lambda 2 / lambda1 = {}, 1/(1 - R2) / 1/(1 - R) = {}",
+        hazard2 / hazard,
+        (1.0 - R) / (1.0 - R2)
+    );
 
     Ok(())
 }

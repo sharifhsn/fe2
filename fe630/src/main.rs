@@ -1,5 +1,5 @@
-use fe630::assn1::prob1::a;
+use fe630::midterm::*;
 
 fn main() {
-    println!("{}", a().unwrap());
+    a().unwrap();
 }
