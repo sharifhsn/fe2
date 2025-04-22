@@ -1,11 +1,11 @@
-use nalgebra::DMatrix;
 use nalgebra::par_iter::ParColumnIter;
-use polars::prelude::*;
-use rand::{prelude::*, rng};
-use rand_distr::StandardNormal;
+use nalgebra::DMatrix;
 use plotly::common::Mode;
 use plotly::Plot;
 use plotly::Scatter;
+use polars::prelude::*;
+use rand::{prelude::*, rng};
+use rand_distr::StandardNormal;
 use rayon::prelude::*;
 
 #[derive(Debug, Clone, Copy)]
@@ -15,10 +15,10 @@ enum OptionType {
 }
 
 pub struct EuropeanOption {
-    pub S: f64, // stock price
-    pub K: f64, // strike price
-    pub r: f64, // risk-free interest rate
-    pub T: f64, // time to expiration
+    pub S: f64,   // stock price
+    pub K: f64,   // strike price
+    pub r: f64,   // risk-free interest rate
+    pub T: f64,   // time to expiration
     pub sig: f64, // volatility
     pub div: f64, // dividend yield
     pub option_type: OptionType,
@@ -65,7 +65,6 @@ pub struct MonteCarloStatistics {
     pub SE: f64,
 }
 
-
 pub struct MonteCarloEuropeanOption {
     pub option: EuropeanOption,
     pub mc: MonteCarlo,
@@ -76,10 +75,7 @@ pub struct MonteCarloEuropeanOption {
 }
 
 impl MonteCarloEuropeanOption {
-    pub fn new(
-        option: EuropeanOption,
-        mc: MonteCarlo,
-    ) -> Self {
+    pub fn new(option: EuropeanOption, mc: MonteCarlo) -> Self {
         let dt = option.T / mc.n as f64;
         let nudt = (option.r - option.div - 0.5 * option.sig.powi(2)) * dt;
         let sigsdt = option.sig * dt.sqrt();
@@ -104,7 +100,7 @@ impl MonteCarloEuropeanOption {
                 *val += self.nudt + self.sigsdt * epsilon;
             }
         });
-    
+
         let S_T = S_T.par_iter().map(|val| val.exp()).collect::<Vec<f64>>();
         S_T
     }
@@ -128,8 +124,10 @@ impl MonteCarloEuropeanOption {
         let sum_CT = C_T.iter().sum::<f64>();
         let sum_CT2 = C_T.iter().map(|x| x.powi(2)).sum::<f64>();
         let C0 = sum_CT / self.mc.m as f64 * (-self.option.r * self.option.T).exp();
-        let SD =
-            (((sum_CT2 - sum_CT.powi(2) / self.mc.m as f64) * (-2.0 * self.option.r * self.option.T).exp()) / (self.mc.m as f64 - 1.0)).sqrt();
+        let SD = (((sum_CT2 - sum_CT.powi(2) / self.mc.m as f64)
+            * (-2.0 * self.option.r * self.option.T).exp())
+            / (self.mc.m as f64 - 1.0))
+            .sqrt();
         let SE = SD / (self.mc.m as f64).sqrt();
         MonteCarloStatistics {
             sum_CT,
@@ -162,6 +160,26 @@ impl MonteCarloEuropeanOption {
             plot.add_trace(trace);
         }
         plot
+    }
+}
+
+impl std::fmt::Display for MonteCarloEuropeanOption {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Monte Carlo European Option: \n\
+            S: {}, K: {}, r: {}, T: {}, sig: {}, div: {}, option_type: {:?}, \n\
+            n: {}, m: {}",
+            self.option.S,
+            self.option.K,
+            self.option.r,
+            self.option.T,
+            self.option.sig,
+            self.option.div,
+            self.option.option_type,
+            self.mc.n,
+            self.mc.m
+        )
     }
 }
 
