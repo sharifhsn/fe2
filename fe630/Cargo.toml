@@ -5,7 +5,9 @@ edition = "2021"
 
 [dependencies]
 chrono = "0.4.40"
+itertools = "0.14.0"
 nalgebra = "0.33.2"
+plotters = "0.3.7"
 polars = { workspace = true, features = ["full"] }
 time = { version = "0.3.41", features = ["macros"] }
 tokio = { version = "1.44.2", features = ["full"] }

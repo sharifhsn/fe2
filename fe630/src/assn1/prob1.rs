@@ -1,6 +1,4 @@
-use nalgebra::{
-    dmatrix, dvector, DMatrix, DVector,
-};
+use nalgebra::{dmatrix, dvector, DMatrix, DVector};
 use polars::prelude::*;
 use std::f64::consts::E;
 
@@ -33,27 +31,19 @@ pub fn a() -> PolarsResult<DataFrame> {
     let l = col("l");
 
     // let u = W.clone().log(E);
-    let EUW_T = (p_w.clone()
-        * U(W_0.clone() + w.clone())
-        + p_l.clone()
-            * U(W_0.clone() - l.clone()))
+    let EUW_T = (p_w.clone() * U(W_0.clone() + w.clone())
+        + p_l.clone() * U(W_0.clone() - l.clone()))
     .alias("\\mathbb{E}[U(W_T)]");
 
     let CE = (U_inv(EUW_T.clone())).alias("CE");
 
-    let var = p_w.clone() * w.clone().pow(2)
-        + p_l.clone() * l.clone().pow(2);
+    let var = p_w.clone() * w.clone().pow(2) + p_l.clone() * l.clone().pow(2);
 
-    let EW_T = (p_w.clone()
-        * (W_0.clone() + w.clone())
-        + p_l.clone()
-            * (W_0.clone() - l.clone()))
-    .alias("\\mathbb{E}[W_T]");
-    let RP =
-        (EW_T.clone() - CE.clone()).alias("RP");
+    let EW_T = (p_w.clone() * (W_0.clone() + w.clone()) + p_l.clone() * (W_0.clone() - l.clone()))
+        .alias("\\mathbb{E}[W_T]");
+    let RP = (EW_T.clone() - CE.clone()).alias("RP");
 
-    let Ez = p_w.clone() * w.clone()
-        - p_l.clone() * l.clone();
+    let Ez = p_w.clone() * w.clone() - p_l.clone() * l.clone();
 
     let W_Tstar = EW_T.clone() + Ez.clone();
 
@@ -61,10 +51,7 @@ pub fn a() -> PolarsResult<DataFrame> {
 
     let y = -var / lit(2.0) * A;
 
-    df.with_column(Column::new(
-        "W_0".into(),
-        [1200.0],
-    ))?;
+    df.with_column(Column::new("W_0".into(), [1200.0]))?;
 
     let df = df.lazy().select([CE]).collect()?;
 
@@ -89,13 +76,11 @@ pub fn b() -> PolarsResult<DataFrame> {
 
     let A = -(k.clone() - lit(1.0)) / W_0.clone();
 
-    let risk_attitude = (when(A.clone().gt(0))
-        .then(lit("risk-averse"))
-        .otherwise(
-            when(A.clone().lt(0))
-                .then(lit("risk-taking"))
-                .otherwise(lit("risk-neutral")),
-        ))
+    let risk_attitude = (when(A.clone().gt(0)).then(lit("risk-averse")).otherwise(
+        when(A.clone().lt(0))
+            .then(lit("risk-taking"))
+            .otherwise(lit("risk-neutral")),
+    ))
     .alias("risk attitude");
 
     Ok(df)
@@ -104,8 +89,7 @@ pub fn c() {
     let n = 3;
     let lambda = 0.5;
 
-    let mu: DVector<f64> =
-        dvector![0.08, 0.12, 0.15];
+    let mu: DVector<f64> = dvector![0.08, 0.12, 0.15];
     let sigma: DMatrix<f64> = dmatrix![
         0.02,  0.01,  0.015;
         0.01,  0.03,  0.02;

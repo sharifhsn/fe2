@@ -1,0 +1,25 @@
+---
+title: "Assignment 4 - Problem 2"
+author: "Your Name"
+date: "`r Sys.Date()`"
+output: html_document
+---
+```{r install, include=FALSE}
+install.packages("Sim.DiffProc")
+```
+```{r setup, include=FALSE}
+library("Sim.DiffProc")
+```
+
+
+# Introduction
+
+Write your introduction here.
+
+# Analysis
+
+Write your analysis here.
+
+# Conclusion
+
+Write your conclusion here.
