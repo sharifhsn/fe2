@@ -926,6 +926,9 @@ dependencies = [
 [[package]]
 name = "fe635"
 version = "0.1.0"
+dependencies = [
+ "statrs",
+]
 
 [[package]]
 name = "fe680"
