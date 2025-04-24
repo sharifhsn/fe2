@@ -77,6 +77,7 @@ impl EuropeanOption {
     }
 }
 
+#[derive(Clone, Copy)]
 pub struct MonteCarlo {
     pub n: usize, // number of time steps
     pub m: usize, // number of simulated paths
@@ -111,6 +112,7 @@ pub struct MonteCarloEuropeanOption {
     pub sigsdt: f64,
     pub lnS: f64,
     pub erddt: f64,
+    pub beta1: f64,
 }
 
 impl MonteCarloEuropeanOption {
@@ -129,6 +131,7 @@ impl MonteCarloEuropeanOption {
             sigsdt,
             lnS,
             erddt,
+            beta1: -1.0,
         }
     }
 
@@ -154,6 +157,25 @@ impl MonteCarloEuropeanOption {
         let mut master_rng = SmallRng::seed_from_u64(master_seed);
         let seeds: Vec<u64> = (0..self.mc.m).map(|_| master_rng.gen()).collect();
 
+        let payoff = |lnS: f64, cv: f64| match self.option.option_type {
+            OptionType::Call => {
+                (lnS.exp() - self.option.K).max(0.0)
+                    + if self.mc.is_control {
+                        self.beta1 * cv
+                    } else {
+                        0.0
+                    }
+            }
+            OptionType::Put => {
+                (self.option.K - lnS.exp()).max(0.0)
+                    + if self.mc.is_control {
+                        self.beta1 * cv
+                    } else {
+                        0.0
+                    }
+            }
+        };
+
         let mut C_T = vec![0.0; self.mc.m];
 
         C_T.par_iter_mut().zip(seeds).for_each(|(val, seed)| {
@@ -161,36 +183,33 @@ impl MonteCarloEuropeanOption {
             let mut lnS1 = lnS;
             let mut lnS2 = lnS;
 
-            let mut St1 = self.option.S;
-            let mut St2 = self.option.S;
             let mut cv1 = 0.0;
             let mut cv2 = 0.0;
 
             for i in 0..self.mc.n {
                 let t = (i - 1) as f64 * self.dt;
-                let delta1 = self.delta(St1);
-                let delta2 = self.delta(St2);
                 let epsilon: f64 = rng.sample(StandardNormal);
 
-                lnS1 += nudt + sigsdt * epsilon;
-                if self.mc.is_antithetic {
-                    lnS2 += nudt - sigsdt * epsilon;
+                let lnSn1 = lnS1 + nudt + sigsdt * epsilon;
+                if self.mc.is_control {
+                    let delta1 = self.delta(lnS1.exp());
+                    cv1 += delta1 * (lnSn1.exp() - lnS1.exp() * self.erddt);
                 }
-
-                let Stn1 = lnS1.exp();
-                let Stn2 = lnS2.exp();
-                
+                lnS1 = lnSn1;
+                if self.mc.is_antithetic {
+                    let lnSn2 = lnS2 + nudt - sigsdt * epsilon;
+                    if self.mc.is_control {
+                        let delta2 = self.delta(lnS2.exp());
+                        cv2 += delta2 * (lnSn2.exp() - lnS2.exp() * self.erddt);
+                    }
+                    lnS2 = lnSn2;
+                }
             }
 
-            let payoff = |lnS: f64| match self.option.option_type {
-                OptionType::Call => (lnS.exp() - self.option.K).max(0.0),
-                OptionType::Put => (self.option.K - lnS.exp()).max(0.0),
-            };
-
             *val = if self.mc.is_antithetic {
-                0.5 * (payoff(lnS1) + payoff(lnS2))
+                0.5 * (payoff(lnS1, cv1) + payoff(lnS2, cv2))
             } else {
-                payoff(lnS1)
+                payoff(lnS1, cv1)
             };
         });
 
@@ -244,27 +263,17 @@ impl MonteCarloEuropeanOption {
     }
 }
 
-impl std::fmt::Display for MonteCarloEuropeanOption {
+impl std::fmt::Display for MonteCarloStatistics {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "Monte Carlo European Option: \n\
-            S: {}, K: {}, r: {}, T: {}, sig: {}, div: {}, option_type: {:?}, \n\
-            n: {}, m: {}",
-            self.option.S,
-            self.option.K,
-            self.option.r,
-            self.option.T,
-            self.option.sig,
-            self.option.div,
-            self.option.option_type,
-            self.mc.n,
-            self.mc.m
+            "C0: {:.4}, SD: {:.4}, SE: {:.4}",
+            self.C0, self.SD, self.SE
         )
     }
 }
 
-pub fn a() -> PolarsResult<()> {
+pub fn a() {
     // option parameters
     let r = 0.01;
     let div = 0.005;
@@ -275,42 +284,80 @@ pub fn a() -> PolarsResult<()> {
     let option_type = OptionType::Call;
 
     // monte carlo parameters
-    let n = 700; //300; //-700 time steps
-    let m = 25_000_000; //1_000_000; //-5_000_000 simulated paths
+    let n = 500; //300; //-700 time steps
+    let m = 1_000_000; //1_000_000; //-5_000_000 simulated paths
 
-    let option = EuropeanOption::new(S, K, r, T, sig, div, option_type);
-    let mc = MonteCarlo::new(n, m, false, false);
-    let mc_option = MonteCarloEuropeanOption::new(option, mc);
+    fn run_simulations(
+        ns: Vec<usize>,
+        ms: Vec<usize>,
+        S: f64,
+        K: f64,
+        r: f64,
+        T: f64,
+        sig: f64,
+        div: f64,
+    ) {
+        for &n in &ns {
+            for &m in &ms {
+                println!("Running simulation for n = {}, m = {}", n, m);
 
-    let (option_prices, duration_simulation) = time!(mc_option.simulate());
-    println!("Option Prices (Time: {:?})", duration_simulation);
+                let option_call = EuropeanOption::new(S, K, r, T, sig, div, OptionType::Call);
+                let mc_call = MonteCarlo::new(n, m, false, false);
+                let mc_option_call = MonteCarloEuropeanOption::new(option_call, mc_call);
 
-    let (stats, duration_stats) = time!(mc_option.option_statistics(option_prices));
-    println!(
-        "Monte Carlo Statistics:\nC0: {:.4}, SD: {:.4}, SE: {:.4} (Time: {:?})",
-        stats.C0, stats.SD, stats.SE, duration_stats
-    );
+                let (option_prices_call, duration_simulation_call) =
+                    time!(mc_option_call.simulate());
+                println!(
+                    "Call Option Simulation Time: {:?}",
+                    duration_simulation_call
+                );
+
+                let stats_call = mc_option_call.option_statistics(option_prices_call);
+                println!(
+                    "Call Option Statistics:\nC0: {:.4}, SD: {:.4}, SE: {:.4}",
+                    stats_call.C0, stats_call.SD, stats_call.SE
+                );
+
+                let option_put = EuropeanOption::new(S, K, r, T, sig, div, OptionType::Put);
+                let mc_put = MonteCarlo::new(n, m, false, false);
+                let mc_option_put = MonteCarloEuropeanOption::new(option_put, mc_put);
+
+                let (option_prices_put, duration_simulation_put) = time!(mc_option_put.simulate());
+                println!("Put Option Simulation Time: {:?}", duration_simulation_put);
+
+                let stats_put = mc_option_put.option_statistics(option_prices_put);
+                println!(
+                    "Put Option Statistics:\nC0: {:.4}, SD: {:.4}, SE: {:.4}",
+                    stats_put.C0, stats_put.SD, stats_put.SE
+                );
+            }
+        }
+    }
+
+    // Example usage
+    let ns = vec![300, 500, 700];
+    let ms = vec![1_000_000, 3_000_000, 5_000_000];
+    run_simulations(ns, ms, S, K, r, T, sig, div);
 
     // Closed-form simulation
-    let (option_prices_cf, duration_simulation_cf) = time!(mc_option.simulate_closed_form());
+    // let (option_prices_cf, duration_simulation_cf) = time!(mc_option.simulate_closed_form());
 
-    println!(
-        "Option Prices (Closed Form) (Time: {:?})",
-        duration_simulation_cf
-    );
+    // println!(
+    //     "Option Prices (Closed Form) (Time: {:?})",
+    //     duration_simulation_cf
+    // );
 
-    let (stats_cf, duration_stats_cf) = time!(mc_option.option_statistics(option_prices_cf));
-    println!(
-        "Monte Carlo Statistics (Closed Form):\nC0: {:.4}, SD: {:.4}, SE: {:.4} (Time: {:?})",
-        stats_cf.C0, stats_cf.SD, stats_cf.SE, duration_stats_cf
-    );
-    let bs_price = option.black_scholes();
-    println!("Black-Scholes Price: {:.4}", bs_price);
+    // let (stats_cf, duration_stats_cf) = time!(mc_option.option_statistics(option_prices_cf));
+    // println!(
+    //     "Monte Carlo Statistics (Closed Form):\nC0: {:.4}, SD: {:.4}, SE: {:.4} (Time: {:?})",
+    //     stats_cf.C0, stats_cf.SD, stats_cf.SE, duration_stats_cf
+    // );
+    // let bs_price = option.black_scholes();
+    // println!("Black-Scholes Price: {:.4}", bs_price);
 
     // let paths = mc_option.paths();
     // let plot = mc_option.plot_paths(paths);
     // plot.show();
-    Ok(())
 }
 
 pub fn b() {
@@ -321,41 +368,53 @@ pub fn b() {
     let S: f64 = 100.0;
     let K = 100.0;
     let T = 1.0;
-    let option_type = OptionType::Call;
 
-    let option = EuropeanOption::new(S, K, r, T, sig, div, option_type);
+    let option_call = EuropeanOption::new(S, K, r, T, sig, div, OptionType::Call);
+    let option_put = EuropeanOption::new(S, K, r, T, sig, div, OptionType::Put);
+
     let n = 700;
     let m = 5_000_000;
+
     let mc = MonteCarlo::new(n, m, false, false);
-    let mc_option = MonteCarloEuropeanOption::new(option, mc);
+    let mc_option_call = MonteCarloEuropeanOption::new(option_call, mc);
+    let mc_option_put = MonteCarloEuropeanOption::new(option_put, mc);
 
-    // Simulate stock prices
-    let (option_prices, duration_simulation) = time!(mc_option.simulate());
-    println!("Option Prices (Time: {:?})", duration_simulation);
-
-    // Calculate statistics
-    let (stats, duration_stats) = time!(mc_option.option_statistics(option_prices));
-    println!(
-        "Monte Carlo Statistics:\nC0: {:.4}, SD: {:.4}, SE: {:.4} (Time: {:?})",
-        stats.C0, stats.SD, stats.SE, duration_stats
-    );
-
-    // Now with antithetic
     let mc_a = MonteCarlo::new(n, m, true, false);
-    let mc_option_a = MonteCarloEuropeanOption::new(option, mc_a);
+    let mc_option_a_call = MonteCarloEuropeanOption::new(option_call, mc_a);
+    let mc_option_a_put = MonteCarloEuropeanOption::new(option_put, mc_a);
 
-    let (option_prices, duration_simulation) = time!(mc_option_a.simulate());
+    let mc_c = MonteCarlo::new(n, m, false, true);
+    let mc_option_c_call = MonteCarloEuropeanOption::new(option_call, mc_c);
+    let mc_option_c_put = MonteCarloEuropeanOption::new(option_put, mc_c);
+
+    let mc_ac = MonteCarlo::new(n, m, true, true);
+    let mc_option_ac_call = MonteCarloEuropeanOption::new(option_call, mc_ac);
+    let mc_option_ac_put = MonteCarloEuropeanOption::new(option_put, mc_ac);
+
+    println!("\nSummary Report (Markdown Table):");
     println!(
-        "Option Prices with Antithetic (Time: {:?})",
-        duration_simulation
+        "| {:<30} | {:<15} | {:<15} | {:<15} |",
+        "Method", "Option Value", "Std Dev", "Time (s)"
     );
+    println!("|{:-<32}|{:-<17}|{:-<17}|{:-<17}|", "-", "-", "-", "-");
 
-    let (stats, duration_stats) = time!(mc_option_a.option_statistics(option_prices));
-    println!(
-        "Monte Carlo Statistics with Antithetic:\nC0: {:.4}, SD: {:.4}, SE: {:.4} (Time: {:?})",
-        stats.C0, stats.SD, stats.SE, duration_stats
-    );
+    let report = |label: &str, mc_option: &MonteCarloEuropeanOption| {
+        let (prices, sim_time) = time!(mc_option.simulate());
+        let stats = mc_option.option_statistics(prices);
+        println!(
+            "| {:<30} | {:<15.4} | {:<15.4} | {:<15.4} |",
+            label,
+            stats.C0,
+            stats.SD,
+            sim_time.as_secs_f64()
+        );
+    };
 
-    let bs_price = option.black_scholes();
+    report("Monte Carlo", &mc_option_call);
+    report("MC with Antithetic Variates", &mc_option_a_call);
+    report("MC with Delta-based Control Variate", &mc_option_c_call);
+    report("MC with Antithetic+Control Variates", &mc_option_ac_call);
+
+    let bs_price = option_call.black_scholes();
     println!("Black-Scholes Price: {:.4}", bs_price);
 }

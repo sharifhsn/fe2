@@ -6,11 +6,338 @@ output: html_document
 ---
 ```{r install, include=FALSE}
 install.packages("Sim.DiffProc")
+install.packages("knitr")
 ```
 ```{r setup, include=FALSE}
 library("Sim.DiffProc")
+library(knitr)
+
+setwd("C:/Users/sharif/Code/fe2/fe621")
+data <- read.csv("sample_data25.csv")
+data$stock1
 ```
 
+```{r setexpr}
+f1 <- expression(theta[1] * x)
+g1 <- expression(theta[2] * x^theta[3])
+
+f2 <- expression(theta[1] + theta[2] * x)
+g2 <- expression(theta[3] * x^theta[4])
+
+f3 <- expression(theta[1] + theta[2] * x)
+g3 <- expression(theta[3] * sqrt(x))
+
+f4 <- expression(theta[1])
+g4 <- expression(theta[2] * x^theta[3])
+
+f5 <- expression(theta[1] * x)
+g5 <- expression((theta[2] + theta[3] * x^theta[4]))
+```
+
+```{r stock1}
+fit1 <- fitsde(data = ts(data$stock1, frequency = 365), drift = f1, diffusion = g1, start = list(theta1=0.03, theta2=0.19, theta3=0.5), pmle="euler")
+coef(fit1)
+logLik(fit1)
+AIC(fit1)
+BIC(fit1)
+
+fit2 <- fitsde(data = ts(data$stock1, frequency = 365), drift = f2, diffusion = g2, start = list(theta1=0.01, theta2=0.02, theta3=0.19, theta4=0.54), pmle="euler")
+coef(fit2)
+logLik(fit2)
+AIC(fit2)
+BIC(fit2)
+
+fit3 <- fitsde(data = ts(data$stock1, frequency = 365), drift = f3, diffusion = g3, start = list(theta1=1, theta2=1, theta3=0.5), pmle="euler")
+coef(fit3)
+logLik(fit3)
+AIC(fit3)
+BIC(fit3)
+
+fit4 <- fitsde(data = ts(data$stock1, frequency = 365), drift = f4, diffusion = g4, start = list(theta1=0.03, theta2=0.19, theta3=0.54), pmle="euler")
+coef(fit4)
+logLik(fit4)
+AIC(fit4)
+BIC(fit4)
+
+fit5 <- fitsde(data = ts(data$stock1, frequency = 365), drift = f5, diffusion = g5, start = list(theta1=0.03, theta2=0.01, theta3=0.19, theta4=0.54), pmle="euler")
+coef(fit5)
+logLik(fit5)
+AIC(fit5)
+BIC(fit5)
+
+aic_values <- c(
+    fit1 = AIC(fit1),
+    fit2 = AIC(fit2),
+    fit3 = AIC(fit3),
+    fit4 = AIC(fit4),
+    fit5 = AIC(fit5)
+)
+
+aic_values
+best_fit <- names(which.min(aic_values))
+cat("The model with the lowest AIC is:", best_fit, "with AIC =", min(aic_values), "\n")
+```
+
+```{r stock2}
+fit1 <- fitsde(data = ts(data$stock2, frequency = 365), drift = f1, diffusion = g1, start = list(theta1=0.007, theta2=0.17, theta3=0.5), pmle="euler")
+coef(fit1)
+logLik(fit1)
+AIC(fit1)
+BIC(fit1)
+
+fit2 <- fitsde(data = ts(data$stock2, frequency = 365), drift = f2, diffusion = g2, start = list(theta1=0.01, theta2=0.006, theta3=0.15, theta4=0.5), pmle="euler")
+coef(fit2)
+logLik(fit2)
+AIC(fit2)
+BIC(fit2)
+
+fit3 <- fitsde(data = ts(data$stock2, frequency = 365), drift = f3, diffusion = g3, start = list(theta1=0.5, theta2=0.001, theta3=0.16), pmle="euler")
+coef(fit3)
+logLik(fit3)
+AIC(fit3)
+BIC(fit3)
+
+fit4 <- fitsde(data = ts(data$stock2, frequency = 365), drift = f4, diffusion = g4, start = list(theta1=0.6, theta2=0.16, theta3=0.5), pmle="euler")
+coef(fit4)
+logLik(fit4)
+AIC(fit4)
+BIC(fit4)
+
+fit5 <- fitsde(data = ts(data$stock2, frequency = 365), drift = f5, diffusion = g5, start = list(theta1=0.006, theta2=0.007, theta3=0.15, theta4=0.5), pmle="euler")
+coef(fit5)
+logLik(fit5)
+AIC(fit5)
+BIC(fit5)
+
+aic_values <- c(
+    fit1 = AIC(fit1),
+    fit2 = AIC(fit2),
+    fit3 = AIC(fit3),
+    fit4 = AIC(fit4),
+    fit5 = AIC(fit5)
+)
+
+aic_values
+best_fit <- names(which.min(aic_values))
+cat("The model with the lowest AIC is:", best_fit, "with AIC =", min(aic_values), "\n")
+```
+
+```{r stock3}
+fit1 <- fitsde(data = ts(data$stock3, frequency = 365), drift = f1, diffusion = g1, start = list(theta1=0.007, theta2=0.07, theta3=0.4), pmle="euler")
+coef(fit1)
+logLik(fit1)
+AIC(fit1)
+BIC(fit1)
+
+fit2 <- fitsde(data = ts(data$stock3, frequency = 365), drift = f2, diffusion = g2, start = list(theta1=0.01, theta2=0.007, theta3=0.06, theta4=0.43), pmle="euler")
+coef(fit2)
+logLik(fit2)
+AIC(fit2)
+BIC(fit2)
+
+fit3 <- fitsde(data = ts(data$stock3, frequency = 365), drift = f3, diffusion = g3, start = list(theta1=-0.005, theta2=0.007, theta3=0.045), pmle="euler")
+coef(fit3)
+logLik(fit3)
+AIC(fit3)
+BIC(fit3)
+
+fit4 <- fitsde(data = ts(data$stock3, frequency = 365), drift = f4, diffusion = g4, start = list(theta1=0.75, theta2=0.77, theta3=-0.11), pmle="euler")
+coef(fit4)
+logLik(fit4)
+AIC(fit4)
+BIC(fit4)
+
+fit5 <- fitsde(data = ts(data$stock3, frequency = 365), drift = f5, diffusion = g5, start = list(theta1=0.007, theta2=0.01, theta3=0.06, theta4=0.43), pmle="euler")
+coef(fit5)
+logLik(fit5)
+AIC(fit5)
+BIC(fit5)
+
+aic_values <- c(
+    fit1 = AIC(fit1),
+    fit2 = AIC(fit2),
+    fit3 = AIC(fit3),
+    fit4 = AIC(fit4),
+    fit5 = AIC(fit5)
+)
+
+aic_values
+best_fit <- names(which.min(aic_values))
+cat("The model with the lowest AIC is:", best_fit, "with AIC =", min(aic_values), "\n")
+```
+
+```{r stock4}
+fit1 <- fitsde(data = ts(data$stock4, frequency = 365), drift = f1, diffusion = g1, start = list(theta1=0.03, theta2=0.19, theta3=0.5), pmle="euler")
+coef(fit1)
+logLik(fit1)
+AIC(fit1)
+BIC(fit1)
+
+fit2 <- fitsde(data = ts(data$stock4, frequency = 365), drift = f2, diffusion = g2, start = list(theta1=0.01, theta2=0.02, theta3=0.19, theta4=0.54), pmle="euler")
+coef(fit2)
+logLik(fit2)
+AIC(fit2)
+BIC(fit2)
+
+fit3 <- fitsde(data = ts(data$stock4, frequency = 365), drift = f3, diffusion = g3, start = list(theta1=1, theta2=0.01, theta3=1), pmle="euler")
+coef(fit3)
+logLik(fit3)
+AIC(fit3)
+BIC(fit3)
+
+fit4 <- fitsde(data = ts(data$stock4, frequency = 365), drift = f4, diffusion = g4, start = list(theta1=0.03, theta2=0.19, theta3=0.54), pmle="euler")
+coef(fit4)
+logLik(fit4)
+AIC(fit4)
+BIC(fit4)
+
+fit5 <- fitsde(data = ts(data$stock4, frequency = 365), drift = f5, diffusion = g5, start = list(theta1=0.03, theta2=0.01, theta3=0.19, theta4=0.54), pmle="euler")
+coef(fit5)
+logLik(fit5)
+AIC(fit5)
+BIC(fit5)
+
+aic_values <- c(
+    fit1 = AIC(fit1),
+    fit2 = AIC(fit2),
+    fit3 = AIC(fit3),
+    fit4 = AIC(fit4),
+    fit5 = AIC(fit5)
+)
+
+aic_values
+best_fit <- names(which.min(aic_values))
+cat("The model with the lowest AIC is:", best_fit, "with AIC =", min(aic_values), "\n")
+```
+
+```{r stock5}
+fit1 <- fitsde(data = ts(data$stock5, frequency = 365), drift = f1, diffusion = g1, start = list(theta1=0.03, theta2=0.19, theta3=0.5), pmle="euler")
+coef(fit1)
+logLik(fit1)
+AIC(fit1)
+BIC(fit1)
+
+fit2 <- fitsde(data = ts(data$stock5, frequency = 365), drift = f2, diffusion = g2, start = list(theta1=0.01, theta2=0.02, theta3=0.19, theta4=0.54), pmle="euler")
+coef(fit2)
+logLik(fit2)
+AIC(fit2)
+BIC(fit2)
+
+fit3 <- fitsde(data = ts(data$stock5, frequency = 365), drift = f3, diffusion = g3, start = list(theta1=1, theta2=0.1, theta3=0.5), pmle="euler")
+coef(fit3)
+logLik(fit3)
+AIC(fit3)
+BIC(fit3)
+
+fit4 <- fitsde(data = ts(data$stock5, frequency = 365), drift = f4, diffusion = g4, start = list(theta1=0.03, theta2=0.19, theta3=0.54), pmle="euler")
+coef(fit4)
+logLik(fit4)
+AIC(fit4)
+BIC(fit4)
+
+fit5 <- fitsde(data = ts(data$stock5, frequency = 365), drift = f5, diffusion = g5, start = list(theta1=0.03, theta2=0.01, theta3=0.19, theta4=0.54), pmle="euler")
+coef(fit5)
+logLik(fit5)
+AIC(fit5)
+BIC(fit5)
+
+aic_values <- c(
+    fit1 = AIC(fit1),
+    fit2 = AIC(fit2),
+    fit3 = AIC(fit3),
+    fit4 = AIC(fit4),
+    fit5 = AIC(fit5)
+)
+
+aic_values
+best_fit <- names(which.min(aic_values))
+cat("The model with the lowest AIC is:", best_fit, "with AIC =", min(aic_values), "\n")
+```
+4, 3, 4, 4, 3
+```{r euler}
+fit1 <- fitsde(data = ts(data$stock1, frequency = 365), drift = f4, diffusion = g4, start = list(theta1=0.03, theta2=0.19, theta3=0.54), pmle="euler")
+fit2 <- fitsde(data = ts(data$stock2, frequency = 365), drift = f3, diffusion = g3, start = list(theta1=0.5, theta2=0.01, theta3=0.16), pmle="euler")
+fit3 <- fitsde(data = ts(data$stock3, frequency = 365), drift = f4, diffusion = g4, start = list(theta1=0.75, theta2=0.77, theta3=-0.11), pmle="euler")
+fit4 <- fitsde(data = ts(data$stock4, frequency = 365), drift = f4, diffusion = g4, start = list(theta1=0.03, theta2=0.19, theta3=0.54), pmle="euler")
+fit5 <- fitsde(data = ts(data$stock5, frequency = 365), drift = f3, diffusion = g3, start = list(theta1=0.5, theta2=0.0001, theta3=1.5), pmle="euler")
+fits <- list(fit1, fit2, fit3, fit4, fit5)
+coefs <- sapply(fits, coef)
+results <- data.frame(
+    Stock = c("Stock1", "Stock2", "Stock3", "Stock4", "Stock5"),
+    Model = c("4", "3", "4", "4", "3"),
+    Theta1 = coefs["theta1", ],
+    Theta2 = coefs["theta2", ],
+    Theta3 = coefs["theta3", ]
+)
+
+# Display the table
+kable(results, caption = "Parameter Estimates and Models for Each Stock (Euler)")
+```
+
+```{r ozaki}
+fit1 <- fitsde(data = ts(data$stock1, frequency = 365), drift = f4, diffusion = g4, start = list(theta1=0.03, theta2=0.19, theta3=0.54), pmle="ozaki")
+fit2 <- fitsde(data = ts(data$stock2, frequency = 365), drift = f3, diffusion = g3, start = list(theta1=0.5, theta2=0.001, theta3=0.16), pmle="ozaki")
+fit3 <- fitsde(data = ts(data$stock3, frequency = 365), drift = f4, diffusion = g4, start = list(theta1=0.75, theta2=0.77, theta3=-0.11), pmle="ozaki")
+fit4 <- fitsde(data = ts(data$stock4, frequency = 365), drift = f4, diffusion = g4, start = list(theta1=0.03, theta2=0.19, theta3=0.54), pmle="ozaki")
+fit5 <- fitsde(data = ts(data$stock5, frequency = 365), drift = f3, diffusion = g3, start = list(theta1=1, theta2=0.1, theta3=0.5), pmle="ozaki")
+fits <- list(fit1, fit2, fit3, fit4, fit5)
+coefs <- sapply(fits, coef)
+results <- data.frame(
+    Stock = c("Stock1", "Stock2", "Stock3", "Stock4", "Stock5"),
+    Model = c("4", "3", "4", "4", "3"),
+    Theta1 = coefs["theta1", ],
+    Theta2 = coefs["theta2", ],
+    Theta3 = coefs["theta3", ]
+)
+
+# Display the table
+kable(results, caption = "Parameter Estimates and Models for Each Stock (Ozaki)")
+```
+
+```{r shoji-ozaki}
+fit1 <- fitsde(data = ts(data$stock1, frequency = 365), drift = f4, diffusion = g4, start = list(theta1=0.03, theta2=0.19, theta3=0.54), pmle="shoji")
+fit2 <- fitsde(data = ts(data$stock2, frequency = 365), drift = f3, diffusion = g3, start = list(theta1=0.5, theta2=0.001, theta3=0.16), pmle="shoji")
+fit3 <- fitsde(data = ts(data$stock3, frequency = 365), drift = f4, diffusion = g4, start = list(theta1=0.75, theta2=0.77, theta3=-0.11), pmle="shoji")
+fit4 <- fitsde(data = ts(data$stock4, frequency = 365), drift = f4, diffusion = g4, start = list(theta1=0.03, theta2=0.19, theta3=0.54), pmle="shoji")
+fit5 <- fitsde(data = ts(data$stock5, frequency = 365), drift = f3, diffusion = g3, start = list(theta1=1, theta2=0.1, theta3=0.5), pmle="shoji")
+fits <- list(fit1, fit2, fit3, fit4, fit5)
+coefs <- sapply(fits, coef)
+results <- data.frame(
+    Stock = c("Stock1", "Stock2", "Stock3", "Stock4", "Stock5"),
+    Model = c("4", "3", "4", "4", "3"),
+    Theta1 = coefs["theta1", ],
+    Theta2 = coefs["theta2", ],
+    Theta3 = coefs["theta3", ]
+)
+
+# Display the table
+kable(results, caption = "Parameter Estimates and Models for Each Stock (Shoji-Ozaki)")
+```
+
+```{r kessler}
+fit1 <- fitsde(data = ts(data$stock1, frequency = 365), drift = f4, diffusion = g4, start = list(theta1=0.03, theta2=0.19, theta3=0.54), pmle="kessler")
+fit2 <- fitsde(data = ts(data$stock2, frequency = 365), drift = f3, diffusion = g3, start = list(theta1=0.5, theta2=0.001, theta3=0.16), pmle="kessler")
+fit3 <- fitsde(data = ts(data$stock3, frequency = 365), drift = f4, diffusion = g4, start = list(theta1=0.75, theta2=0.77, theta3=-0.11), pmle="kessler")
+fit4 <- fitsde(data = ts(data$stock4, frequency = 365), drift = f4, diffusion = g4, start = list(theta1=0.03, theta2=0.19, theta3=0.54), pmle="kessler")
+fit5 <- fitsde(data = ts(data$stock5, frequency = 365), drift = f3, diffusion = g3, start = list(theta1=1, theta2=0.1, theta3=0.5), pmle="kessler")
+fits <- list(fit1, fit2, fit3, fit4, fit5)
+coefs <- sapply(fits, coef)
+results <- data.frame(
+    Stock = c("Stock1", "Stock2", "Stock3", "Stock4", "Stock5"),
+    Model = c("4", "3", "4", "4", "3"),
+    Theta1 = coefs["theta1", ],
+    Theta2 = coefs["theta2", ],
+    Theta3 = coefs["theta3", ]
+)
+
+# Display the table
+kable(results, caption = "Parameter Estimates and Models for Each Stock (Kessler)")
+```
+
+
+```{r scratch}
+?fitsde
+```
 
 # Introduction
 
