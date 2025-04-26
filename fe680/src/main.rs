@@ -1,7 +1,5 @@
-use fe680::assn4::*;
+use fe680::assn5::*;
 
 fn main() {
-    prob1::a();
-    prob2::a();
-    prob3::a();
+    prob1::test_biv().unwrap();
 }

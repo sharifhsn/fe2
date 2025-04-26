@@ -9,7 +9,6 @@ resolver = "2"
 
 [workspace.dependencies]
 polars = { version = "0.46", features = ["full", "list_arithmetic", "log"] }
-cubic_spline = { version = "1" }
 
 [profile.release]
 debug = true
