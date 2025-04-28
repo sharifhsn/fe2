@@ -1,21 +1,23 @@
 ---
 title: "Assignment 4 - Problem 2"
-author: "Your Name"
+author: "Sharif Haason"
 date: "`r Sys.Date()`"
 output: html_document
 ---
-```{r install, include=FALSE}
-install.packages("Sim.DiffProc")
-install.packages("knitr")
-```
-```{r setup, include=FALSE}
+# Initialize Libraries/Data
+
+```{r setup}
 library("Sim.DiffProc")
 library(knitr)
 
-setwd("C:/Users/sharif/Code/fe2/fe621")
+#setwd("C:/Users/sharif/Code/fe2/fe621")
+setwd("/home/sharif/Code/fe2/fe621")
 data <- read.csv("sample_data25.csv")
-data$stock1
 ```
+
+# Set Expressions
+
+These are the models that we are trying to fit.
 
 ```{r setexpr}
 f1 <- expression(theta[1] * x)
@@ -33,6 +35,10 @@ g4 <- expression(theta[2] * x^theta[3])
 f5 <- expression(theta[1] * x)
 g5 <- expression((theta[2] + theta[3] * x^theta[4]))
 ```
+
+# Stock 1
+
+For stock 1, model 4 is determined to have the best fit.
 
 ```{r stock1}
 fit1 <- fitsde(data = ts(data$stock1, frequency = 365), drift = f1, diffusion = g1, start = list(theta1=0.03, theta2=0.19, theta3=0.5), pmle="euler")
@@ -78,6 +84,10 @@ best_fit <- names(which.min(aic_values))
 cat("The model with the lowest AIC is:", best_fit, "with AIC =", min(aic_values), "\n")
 ```
 
+# Stock 2
+
+For stock 2, model 3 is determined to have the best fit.
+
 ```{r stock2}
 fit1 <- fitsde(data = ts(data$stock2, frequency = 365), drift = f1, diffusion = g1, start = list(theta1=0.007, theta2=0.17, theta3=0.5), pmle="euler")
 coef(fit1)
@@ -121,6 +131,10 @@ aic_values
 best_fit <- names(which.min(aic_values))
 cat("The model with the lowest AIC is:", best_fit, "with AIC =", min(aic_values), "\n")
 ```
+
+# Stock 3
+
+For stock 3, model 4 is determined to have the best fit.
 
 ```{r stock3}
 fit1 <- fitsde(data = ts(data$stock3, frequency = 365), drift = f1, diffusion = g1, start = list(theta1=0.007, theta2=0.07, theta3=0.4), pmle="euler")
@@ -166,6 +180,10 @@ best_fit <- names(which.min(aic_values))
 cat("The model with the lowest AIC is:", best_fit, "with AIC =", min(aic_values), "\n")
 ```
 
+# Stock 4
+
+For stock 4, model 4 is determined to have the best fit.
+
 ```{r stock4}
 fit1 <- fitsde(data = ts(data$stock4, frequency = 365), drift = f1, diffusion = g1, start = list(theta1=0.03, theta2=0.19, theta3=0.5), pmle="euler")
 coef(fit1)
@@ -210,6 +228,10 @@ best_fit <- names(which.min(aic_values))
 cat("The model with the lowest AIC is:", best_fit, "with AIC =", min(aic_values), "\n")
 ```
 
+# Stock 5
+
+For stock 5, model 3 is determined to have the best fit.
+
 ```{r stock5}
 fit1 <- fitsde(data = ts(data$stock5, frequency = 365), drift = f1, diffusion = g1, start = list(theta1=0.03, theta2=0.19, theta3=0.5), pmle="euler")
 coef(fit1)
@@ -253,7 +275,9 @@ aic_values
 best_fit <- names(which.min(aic_values))
 cat("The model with the lowest AIC is:", best_fit, "with AIC =", min(aic_values), "\n")
 ```
-4, 3, 4, 4, 3
+
+# Parametrization
+
 ```{r euler}
 fit1 <- fitsde(data = ts(data$stock1, frequency = 365), drift = f4, diffusion = g4, start = list(theta1=0.03, theta2=0.19, theta3=0.54), pmle="euler")
 fit2 <- fitsde(data = ts(data$stock2, frequency = 365), drift = f3, diffusion = g3, start = list(theta1=0.5, theta2=0.01, theta3=0.16), pmle="euler")
@@ -334,19 +358,4 @@ results <- data.frame(
 kable(results, caption = "Parameter Estimates and Models for Each Stock (Kessler)")
 ```
 
-
-```{r scratch}
-?fitsde
-```
-
-# Introduction
-
-Write your introduction here.
-
-# Analysis
-
-Write your analysis here.
-
-# Conclusion
-
-Write your conclusion here.
+I decided that the Kessler model had the best fit, since we're calibrating to real data, it's able to directly model better.
