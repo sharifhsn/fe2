@@ -1,5 +1,5 @@
-use fe630::midterm::*;
+use fe630::assn2::*;
 
 fn main() {
-    a().unwrap();
+    prob3::a();
 }

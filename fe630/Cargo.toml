@@ -4,10 +4,12 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+argmin = "0.10.0"
+argmin-math = "0.4.0"
 chrono = "0.4.40"
 itertools = "0.14.0"
 nalgebra = "0.33.2"
-plotters = "0.3.7"
+plotters = { version = "0.3.7", features = ["evcxr"] }
 polars = { workspace = true, features = ["full"] }
 time = { version = "0.3.41", features = ["macros"] }
 tokio = { version = "1.44.2", features = ["full"] }

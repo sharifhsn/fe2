@@ -1,0 +1,350 @@
+---
+title: "FE630HW2"
+author: "Trevor Lenig"
+date: "2025-04-28"
+output: 
+  pdf_document:
+    latex_engine: xelatex
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#problem 2.2.1
+
+# Objective function
+f1 <- function(x) x[1] + x[2] + 2 * x[3]^2
+# Constraints: x1 = 1, x1^2 + x2^2 = 1
+constraint_penalty <- function(x) (x[1] - 1)^2 + (x[1]^2 + x[2]^2 - 1)^2
+f1_pen <- function(x) f1(x) + 1e12 * constraint_penalty(x)
+# Initial guess
+x0 <- c(1, 0, 0)
+res <- optim(x0, f1_pen)
+res$par
+f1(res$par)
+```
+
+We shouldn’t use a Lagrangian approach here because the variables x1 and x2 are not “free” variables. When looking at the constraints, x1 and x2 are fixed. x1 is fixed at 1, and then by plugging that into the other constraint we see that x2 is fixed at 0. That leaves x3but it has no constraints. Since there is only one unconstrained non-fixed variable left, you can minimize this directly.
+
+
+```{r}
+#problem 2.2.2
+
+# For constraint x1 + x2 = 1
+f2 <- function(x) 2 * x[1]^2 + x[2]^2
+constraint2 <- function(x, rhs) (x[1] + x[2] - rhs)^2
+f2_pen <- function(x, rhs) f2(x) + 1e8 * constraint2(x, rhs)
+x0 <- c((1/3), (2/3))
+x0_1 <- c(0.35, 0.70)
+opt1 <- optim(x0, function(x) f2_pen(x, 1)) # sum = 1
+opt2 <- optim(x0_1, function(x) f2_pen(x, 1.05)) # sum = 1.05
+cat("x* sum=1:", opt1$par, "f*=", f2(opt1$par), "\n")
+cat("x* sum=1.05:", opt2$par, "f*=", f2(opt2$par), "\n")
+cat("Difference:", f2(opt2$par) - f2(opt1$par), "\n")
+```
+
+```{r}
+#problem 2.2.3 
+
+
+#Problem 3, part b
+# Parameters
+rho1 <- 0.05  # Expected return asset 1
+rho2 <- 0.10  # Expected return asset 2
+sigma1 <- 0.10  # Volatility asset 1
+sigma2 <- 0.20  # Volatility asset 2
+rho12 <- -0.5   # Correlation
+
+# Pre-compute constants
+A <- sigma1^2 + sigma2^2 - 2 * rho12 * sigma1 * sigma2
+# (this is 0.07)
+B <- -2 * sigma2^2 + 2 * rho12 * sigma1 * sigma2
+# (this is -0.10)
+C <- sigma2^2
+# (this is 0.04)
+
+# Create a sequence of target sigmas (2% to 30% by 0.5%)
+sigma_T_vec <- seq(0.02, 0.30, by = 0.005)
+
+# Initialize results storage
+results <- data.frame(
+  sigma_T = numeric(0),
+  w1 = numeric(0),
+  w2 = numeric(0),
+  Rp = numeric(0)
+)
+
+# Loop through each sigma_T
+for (sigma_T in sigma_T_vec) {
+  
+  # Discriminant inside the square root
+  discriminant <- B^2 - 4 * A * (C - sigma_T^2)
+  
+  # Check if discriminant is negative
+  if (discriminant < 0) {
+    next  # Skip invalid sigma_T values (no real solution)
+  }
+  
+  # Compute w1
+  w1 <- (-B + sqrt(discriminant)) / (2 * A)
+  
+  # Compute w2
+  w2 <- 1 - w1
+  
+  # Compute portfolio return
+  Rp <- (rho1 - rho2) * w1 + rho2
+  
+  # Store results
+  results <- rbind(results, data.frame(
+    sigma_T = sigma_T,
+    w1 = w1,
+    w2 = w2,
+    Rp = Rp
+  ))
+}
+
+# Print results
+print(results)
+
+# Optionally, plot Rp vs sigma_T
+plot(results$sigma_T, results$Rp, type = "l", col = "blue",
+     main = "Efficient Frontier: Max Return for Target Risk",
+     xlab = "Target Risk (σ_T)", ylab = "Expected Return (R_p)",
+     lwd = 2)
+grid()
+
+# PART (c): Min Variance for Target Return
+min_var_target_return <- function(R_T) {
+  if (rho1 == rho2) stop("rho1 and rho2 must differ")
+  w1 <- (R_T - rho2) / (rho1 - rho2)
+  w2 <- 1 - w1
+  if (w1 < 0 || w1 > 1 || w2 < 0 || w2 > 1) return(data.frame(risk=NA, w1=NA, w2=NA, R_T=R_T))
+  risk2 <- sigma1^2 * w1^2 + sigma2^2 * w2^2 + 2 * rho12 * sigma1 * sigma2 * w1 * w2
+  risk <- sqrt(risk2)
+  data.frame(risk=risk, w1=w1, w2=w2, R_T=R_T)
+}
+R_T_vec <- seq(0.05, 0.10, by=0.0005)
+results_minvar <- do.call(rbind, lapply(R_T_vec, min_var_target_return))
+
+# Remove NAs for plotting
+results_minvar <- na.omit(results_minvar)
+
+# PART (c) PLOT: Min Variance for Target Return
+plot(results_minvar$risk, results_minvar$R_T, type="l", col="red", lwd=2, lty=2,
+     main="Efficient Frontier: Min Variance for Target Return",
+     xlab="Portfolio Risk (σ_P)", ylab="Target Return (R_T)")
+grid()
+
+# PART (d) PLOT: Overlay both frontiers
+plot(results_minvar$risk, results_minvar$R_T, type="l", col="red", lwd=2, lty=2,
+     main="Efficient Frontiers Comparison",
+     xlab="Portfolio Risk (σ)", ylab="Portfolio Expected Return")
+grid()
+lines(results$sigma_T, results$Rp, col="blue", lwd=2)
+legend("bottomright",
+       legend=c("Min Variance (Target Return)", "Max Return (Target Risk)"),
+       col=c("red", "blue"), lwd=2, lty=c(2, 1), bty="n")
+```
+
+
+```{r}
+#problem 2.3.1
+
+# Install only if necessary:
+# install.packages("ROI")
+# install.packages("ROI.plugin.quadprog")
+library(ROI)
+library(ROI.plugin.quadprog)
+
+# Define the quadratic and linear coefficients
+Q <- matrix(c(2, 0, 0, 4), nrow=2) # The quadratic form matrix (factor of 2)
+L <- c(-4, -4) # Linear term (-4x1 - 4x2)
+
+# Constraints:
+# 1. x1 + 4x2 <= 3        ("less than" inequality)
+# 2. x1 - x2 >= 0   <=>   -x1 + x2 <= 0  ("greater than" converted to "less than")
+A <- matrix(c(1, 4, -1, 1), nrow=2, byrow=TRUE)
+dir <- c("<=", "<=")
+rhs <- c(3, 0)
+
+# Set up model
+library(ROI)
+QP <- OP(
+  objective = Q_objective(Q = Q, L = L),
+  constraints = L_constraint(L = A, dir = dir, rhs = rhs),
+  bounds = V_bound(lb = c(-Inf, -Inf), ub = c(Inf, Inf)),
+  maximum = FALSE
+)
+
+# Solve
+solution <- ROI_solve(QP)
+sol <- solution$solution
+optval <- (sol[1] - 2)^2 + 2 * (sol[2] - 1)^2
+
+cat("Optimal x1:", sol[1], "\nOptimal x2:", sol[2], "\nObjective value:", optval, "\n")
+```
+
+```{r}
+#problem 2.3.2
+
+#install.packages("nloptr")
+library(nloptr)
+
+# Objective: (negative because nloptr does minimization)
+f_nlopt <- function(x) -(5 - x[1]^2 - x[1]*x[2] - 3*x[2]^2)
+
+# Constraints: x1*x2 >= 2, x1 >= 0, x2 >= 0
+g_nlopt <- function(x) {
+  c(2 - x[1]*x[2], -x[1], -x[2])  # all must be <= 0
+}
+
+# Initial guess
+x0 <- c(2,2)
+
+res <- nloptr(x0 = x0,
+              eval_f = f_nlopt,
+              eval_g_ineq = g_nlopt,
+              opts = list(algorithm="NLOPT_LN_COBYLA", xtol_rel=1e-8))
+
+cat("Numerical solution:\nx1 =", res$solution[1], "x2 =", res$solution[2], "\n")
+cat("Objective value:", 5 - res$solution[1]^2 - res$solution[1]*res$solution[2] - 3*res$solution[2]^2, "\n")
+
+```
+
+```{r}
+#problem 2.4
+
+library(quadprog)
+
+# Data
+Sigma <- matrix(c(1,0.2,0.1, 0.2,1.1,0.3, 0.1,0.3,2.3), nrow=3)
+mu <- c(4.27, 0.15, 2.85)
+ones <- rep(1, 3)
+vols <- sqrt(diag(Sigma))
+rf <- 0.75
+
+# Helper for MV with target return
+minvar_target_return <- function(target, Sigma, mu) {
+  Dmat <- 2*Sigma
+  dvec <- rep(0, 3)
+  Amat <- cbind(1, mu)
+  bvec <- c(1, target)
+  res <- solve.QP(Dmat, dvec, Amat, bvec, meq=2)
+  w <- res$solution
+  ret <- sum(w * mu)
+  vol <- sqrt(as.numeric(t(w) %*% Sigma %*% w))
+  list(w=w, ret=ret, vol=vol)
+}
+
+### PART 1: Global Minimum Variance Portfolio (GMV)
+w_gmv_unnorm <- solve(Sigma, ones)
+w_gmv <- w_gmv_unnorm / sum(w_gmv_unnorm)
+ret_gmv <- sum(w_gmv * mu)
+vol_gmv <- sqrt(as.numeric(t(w_gmv) %*% Sigma %*% w_gmv))
+cat("\nPART 1: GMV Portfolio\n")
+cat("Weights:", w_gmv, "\nReturn:", ret_gmv, " Volatility:", vol_gmv, "\n")
+
+### PART 2: MV Ports with fixed returns (P1 and P2)
+# Target 1: mu1
+target1 <- mu[1]
+mv1 <- minvar_target_return(target1, Sigma, mu); w_p1 <- mv1$w
+cat("\nPART 2: MV Portfolio P1 (Target return =", target1, ")\n")
+cat("Weights:", w_p1, "\nReturn:", mv1$ret, " Volatility:", mv1$vol, "\n")
+
+# Target 2: mean(mu[2:3])
+target2 <- mean(mu[2:3])
+mv2 <- minvar_target_return(target2, Sigma, mu); w_p2 <- mv2$w
+cat("\nPART 2: MV Portfolio P2 (Target return =", target2, ")\n")
+cat("Weights:", w_p2, "\nReturn:", mv2$ret, " Volatility:", mv2$vol, "\n")
+
+### PART 3: Two-fund Theorem, target return 4
+r1 <- mv1$ret; r2 <- mv2$ret
+target3 <- 4
+alpha <- (r2 - target3)/(r2 - r1)
+w_p3 <- alpha*w_p1 + (1-alpha)*w_p2
+ret_p3 <- sum(w_p3 * mu)
+vol_p3 <- sqrt(as.numeric(t(w_p3) %*% Sigma %*% w_p3))
+cat("\nPART 3: MV Portfolio for Target return =", target3, "\n")
+cat("Weights:", w_p3, "\nReturn:", ret_p3, " Volatility:", vol_p3, "\n")
+
+### PART 4: Efficient Frontier points
+returns_seq <- seq(min(mu), max(mu), length.out=100)
+mv_results <- lapply(returns_seq, function(r) minvar_target_return(r, Sigma, mu))
+weights_mat <- sapply(mv_results, function(x) x$w)
+sds <- sapply(mv_results, function(x) x$vol)
+
+# Tangency Portfolio and CML
+excess_mu <- mu - rf
+w_tan_unnormalized <- solve(Sigma, excess_mu)
+w_tan <- w_tan_unnormalized / sum(w_tan_unnormalized)
+ret_tan <- sum(w_tan * mu)
+vol_tan <- sqrt(as.numeric(t(w_tan) %*% Sigma %*% w_tan))
+cat("\nPART 5a: Tangency Portfolio\n")
+cat("Weights:", w_tan, "\nReturn:", ret_tan, " Volatility:", vol_tan, "\n")
+
+### PART 5b: Efficient Portfolio P3, target return 7
+target_ret3 <- 7
+gamma3 <- (target_ret3 - rf)/(ret_tan - rf)
+w_P3_risk <- gamma3 * w_tan
+w_P3_rf <- 1 - gamma3
+vol_P3 <- sqrt(as.numeric(t(w_P3_risk) %*% Sigma %*% w_P3_risk))
+cat("\nPART 5b: Efficient Portfolio P3 (Target return 7):\n")
+cat("Riskless weight:", w_P3_rf, "\nRisky weights:", w_P3_risk, "\n")
+cat("Return:", target_ret3, "Volatility:", vol_P3, "\n")
+
+### PART 5c: Efficient Portfolio P4, target volatility 2
+target_vol4 <- 2
+gamma4 <- target_vol4 / vol_tan
+w_P4_risk <- gamma4 * w_tan
+w_P4_rf <- 1 - gamma4
+ret_P4 <- w_P4_rf * rf + sum(w_P4_risk * mu)
+cat("\nPART 5c: Efficient Portfolio P4 (Target vol 2):\n")
+cat("Riskless weight:", w_P4_rf, "\nRisky weights:", w_P4_risk, "\n")
+cat("Return:", ret_P4, "Volatility:", target_vol4, "\n")
+
+### PART 5d: Plot
+# Include ALL special points in axis limits
+all_xvals <- c(sds, vols, vol_tan, vol_P3, target_vol4)
+all_yvals <- c(returns_seq, mu, ret_gmv, mv1$ret, mv2$ret, ret_tan, target_ret3, ret_P4, ret_p3)
+xmax <- max(all_xvals) * 1.08
+ymax <- max(all_yvals) * 1.08
+
+# CML (capital market line), extended
+sig_CML <- seq(0, xmax, length.out=400)
+ret_CML <- rf + (ret_tan - rf) / vol_tan * sig_CML
+
+
+plot(sds, returns_seq, type='l', lwd=2, col='blue',
+     xlab='Portfolio Volatility', ylab='Portfolio Expected Return',
+     main='Efficient Frontier', xlim=c(0.7, xmax), ylim=c(0, ymax))
+points(vols[1], mu[1], col='red', pch=16, cex=1.8)
+points(vols[2], mu[2], col='red', pch=16, cex=1.8)
+points(vols[3], mu[3], col='red', pch=16, cex=1.8)
+text(vols[1], mu[1], "S1", pos=4, offset=0.5)
+text(vols[2], mu[2], "S2", pos=4, offset=0.5)
+text(vols[3], mu[3], "S3", pos=4, offset=0.5)
+
+lines(sig_CML, ret_CML, col='darkgreen', lwd=2)
+points(vol_tan, ret_tan, pch=17, col='darkgreen', cex=2)
+points(vol_P3, target_ret3, col='magenta', pch=18, cex=2)
+points(target_vol4, ret_P4, col='orange', pch=15, cex=2)
+
+legend("bottomright", legend=c("Eff. Frontier", "S1", "S2", "S3", "CML", "Tangency", "P3 (Target r=7)", "P4 (Target vol=2)"),
+       col=c("blue","red","red","red","darkgreen","darkgreen","magenta","orange"),
+       pch=c(NA,16,16,16,NA,17,18,15),
+       lwd=c(2,NA,NA,NA,2,NA,NA,NA), pt.cex=c(NA,1.8,1.8,1.8,NA,2,2,2), bty="n")
+
+```
+The efficient frontier of the riskless asset (CML) only intersects the efficient frontier of the risky asset at the tangency point - which is the maximum SR portfolio. This is because there is no other portfolio of non-risk-free assets that has a higher expected return at a specified volatility. This means all other risky portfolios are below the CML, which is how I justify saying that the CML doesn’t intersect with our original risky efficient frontier.
+
+
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+
