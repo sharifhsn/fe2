@@ -913,6 +913,8 @@ dependencies = [
 name = "fe630"
 version = "0.1.0"
 dependencies = [
+ "argmin",
+ "argmin-math",
  "chrono",
  "itertools 0.14.0",
  "nalgebra 0.33.2",
