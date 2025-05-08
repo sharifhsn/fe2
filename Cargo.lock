@@ -897,6 +897,7 @@ dependencies = [
  "itertools 0.14.0",
  "jiff",
  "nalgebra 0.33.2",
+ "ndarray",
  "plotly",
  "plotters",
  "polars",
@@ -2050,6 +2051,7 @@ dependencies = [
  "portable-atomic",
  "portable-atomic-util",
  "rawpointer",
+ "rayon",
 ]
 
 [[package]]
