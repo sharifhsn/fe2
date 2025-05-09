@@ -1,17 +1,17 @@
 use plotters::prelude::*;
 use rand::prelude::*;
 use rand_distr::Normal;
-use statrs::distribution::{Normal as StatNormal, Continuous, ContinuousCDF};
 use statrs::distribution::{Binomial, Discrete};
+use statrs::distribution::{Continuous, ContinuousCDF, Normal as StatNormal};
 pub struct GaussianLatentVariableMultiName {
-    pub Nc: usize,  // number of names
-    pub R: f64,     // recovery rate
-    pub beta: f64,  // market exposure
-    pub p: f64,     // unconditional probability of default
+    pub Nc: usize,               // number of names
+    pub R: f64,                  // recovery rate
+    pub beta: f64,               // market exposure
+    pub p: f64,                  // unconditional probability of default
     pub stat_normal: StatNormal, // normal distribution for Z
-    pub normal: Normal<f64>, // normal distribution for Z
-    pub z: f64,     // market factor Z (randomly generated)
-    pub c_t: f64,   // calibrated time-dependent threshold C(T)
+    pub normal: Normal<f64>,     // normal distribution for Z
+    pub z: f64,                  // market factor Z (randomly generated)
+    pub c_t: f64,                // calibrated time-dependent threshold C(T)
 }
 
 impl GaussianLatentVariableMultiName {
@@ -19,7 +19,7 @@ impl GaussianLatentVariableMultiName {
     pub fn new(Nc: usize, R: f64, beta: f64, p: f64) -> Self {
         let normal = Normal::new(0.0, 1.0).unwrap(); // Mean 0, StdDev 1
         let stat_normal = StatNormal::new(0.0, 1.0).unwrap(); // Normal distribution for Z
-        // Generate a random Z from a normal distribution
+                                                              // Generate a random Z from a normal distribution
         let mut rng = rand::rng();
         let z = rng.sample(&normal); // Sample Z from N(0, 1)
 
@@ -30,7 +30,7 @@ impl GaussianLatentVariableMultiName {
             beta,
             p,
             stat_normal, // Normal distribution for Z
-            normal, // Normal distribution for Z
+            normal,      // Normal distribution for Z
             z,
             c_t,
         }
@@ -38,7 +38,8 @@ impl GaussianLatentVariableMultiName {
 
     // Compute P(T|Z) for each credit based on Z, beta, and C(T)
     fn p_t_given_z(&self, z: f64) -> f64 {
-        self.stat_normal.cdf((self.c_t - self.beta * z) / (1.0 - self.beta.powi(2)).sqrt())
+        self.stat_normal
+            .cdf((self.c_t - self.beta * z) / (1.0 - self.beta.powi(2)).sqrt())
     }
 
     // Conditional loss distribution for each credit
@@ -52,7 +53,7 @@ impl GaussianLatentVariableMultiName {
         // Fixed bounds for integration (from -5 to 5 for normal distribution approximation)
         let a = -5.0;
         let b = 5.0;
-        
+
         // Number of steps for Simpson's quadrature
         let num_steps = 1000;
 
@@ -77,13 +78,13 @@ impl GaussianLatentVariableMultiName {
         // Final calculation using Simpson's rule
         (h / 3.0) * (f(a) + f(b) + sum)
     }
-
 }
 
 // Function to plot the unconditional loss distribution
 pub fn plot_unconditional_loss(Nc: usize, R: f64, p: f64) {
     // Create the plot
-    let root = BitMapBackend::new("unconditional_loss_distribution.png", (800, 600)).into_drawing_area();
+    let root =
+        BitMapBackend::new("unconditional_loss_distribution.png", (800, 600)).into_drawing_area();
     root.fill(&WHITE).unwrap();
 
     let mut chart = ChartBuilder::on(&root)
@@ -91,7 +92,6 @@ pub fn plot_unconditional_loss(Nc: usize, R: f64, p: f64) {
         .margin(5)
         .x_label_area_size(30)
         .y_label_area_size(30)
-
         .build_cartesian_2d(0.0..0.1, 0.0..0.2)
         .unwrap();
 
@@ -102,14 +102,12 @@ pub fn plot_unconditional_loss(Nc: usize, R: f64, p: f64) {
         .draw()
         .unwrap();
 
-
     let portfolio4 = GaussianLatentVariableMultiName::new(
-        Nc,   // Nc: number of credits
-        R, // R: recovery rate
+        Nc,  // Nc: number of credits
+        R,   // R: recovery rate
         0.4, // beta: market exposure
-        p, // p: unconditional default probability
+        p,   // p: unconditional default probability
     );
-    
 
     // Plot the unconditional loss for a range of n values
     let loss_values: Vec<(f64, f64)> = (0..=Nc)
@@ -127,10 +125,10 @@ pub fn plot_unconditional_loss(Nc: usize, R: f64, p: f64) {
         .legend(|(x, y)| PathElement::new(vec![(x, y)], &BLUE));
 
     let portfolio2 = GaussianLatentVariableMultiName::new(
-        Nc,   // Nc: number of credits
-        R, // R: recovery rate
+        Nc,  // Nc: number of credits
+        R,   // R: recovery rate
         0.2, // beta: market exposure
-        p, // p: unconditional default probability
+        p,   // p: unconditional default probability
     );
 
     // Plot the unconditional loss for a range of n values
@@ -149,10 +147,10 @@ pub fn plot_unconditional_loss(Nc: usize, R: f64, p: f64) {
         .legend(|(x, y)| PathElement::new(vec![(x, y)], &RED));
 
     let portfolio0 = GaussianLatentVariableMultiName::new(
-        Nc,   // Nc: number of credits
-        R, // R: recovery rate
+        Nc,  // Nc: number of credits
+        R,   // R: recovery rate
         0.0, // beta: market exposure
-        p, // p: unconditional default probability
+        p,   // p: unconditional default probability
     );
 
     // Plot the unconditional loss for a range of n values
@@ -171,7 +169,8 @@ pub fn plot_unconditional_loss(Nc: usize, R: f64, p: f64) {
         .legend(|(x, y)| PathElement::new(vec![(x, y)], &GREEN));
 
     // Add the legend to the chart
-    chart.configure_series_labels()
+    chart
+        .configure_series_labels()
         .background_style(&WHITE.mix(0.8))
         .border_style(&BLACK)
         .draw()
