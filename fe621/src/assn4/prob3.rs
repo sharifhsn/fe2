@@ -156,7 +156,7 @@ impl MonteCarloEuropeanOptionCEVJumps {
                 let vol1 = self.option.sig * S1.powf((self.option.beta - 2.0) / 2.0);
                 let drift1 = (self.option.r
                     - 0.5 * self.option.sig.powi(2) * S1.powf(self.option.beta - 2.0))
-                * self.dt;
+                    * self.dt;
                 let diffusion1 = vol1 * self.dt.sqrt() * epsilon;
 
                 // jump component
@@ -178,9 +178,7 @@ impl MonteCarloEuropeanOptionCEVJumps {
 
                     lnS2 += drift2 + diffusion2;
 
-                    while curr_jump < num_jumps
-                        && jump_times[curr_jump] - t < self.dt
-                    {
+                    while curr_jump < num_jumps && jump_times[curr_jump] - t < self.dt {
                         let jump: f64 = rng.sample(self.jump.jump_distribution);
                         lnS2 += jump;
                         curr_jump += 1;
@@ -267,7 +265,10 @@ pub fn a() {
     let mc_call_option = MonteCarloEuropeanOptionCEVJumps::new(call_option, mc, jump);
     let (call_C_T, call_duration) = time!(mc_call_option.simulate());
     let call_stats = mc_call_option.option_statistics(call_C_T);
-    println!("Call Option Monte Carlo Simulation took: {:?}", call_duration);
+    println!(
+        "Call Option Monte Carlo Simulation took: {:?}",
+        call_duration
+    );
     println!("Call Option Price: {}", call_stats.C0);
     println!("Call Option Standard Deviation: {}", call_stats.SD);
     println!("Call Option Standard Error: {}", call_stats.SE);
