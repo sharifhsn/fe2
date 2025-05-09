@@ -2,21 +2,14 @@ use statrs::distribution::{ContinuousCDF, Normal};
 
 enum OptionType {
     Call,
-    Put
+    Put,
 }
 
-fn black_scholes(
-    option_type: OptionType,
-    S: f64,
-    K: f64,
-    T: f64,
-    r: f64,
-    sig: f64
-) -> f64 {
+fn black_scholes(option_type: OptionType, S: f64, K: f64, T: f64, r: f64, sig: f64) -> f64 {
     let normal = Normal::new(0.0, 1.0).unwrap();
     let d1 = (S.ln() - K.ln() + (r + sig.powi(2) / 2.0) * T) / (sig * T.sqrt());
     let d2 = d1 - sig * T.sqrt();
-    
+
     match option_type {
         OptionType::Call => S * normal.cdf(d1) - K * (-r * T).exp() * normal.cdf(d2),
         OptionType::Put => K * (-r * T).exp() * normal.cdf(-d2) - S * normal.cdf(-d1),
@@ -68,8 +61,6 @@ pub fn a() {
         }
     }
 
-    
     eprintln!("Maximum iterations reached without finding the root.");
     panic!("PANIC!");
-
 }
