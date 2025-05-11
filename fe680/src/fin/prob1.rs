@@ -112,7 +112,7 @@ pub fn a() {
     let yields = vec![0.0423, 0.0428, 0.0477];
 
     let cs = CubicSpline::new(times, yields);
-    let y = cs.y(2.0);
+    let y = cs.y(7.0);
     println!("yield: {}", y);
 }
 
@@ -136,7 +136,7 @@ pub fn b() {
         cs.D(0.5), cs.D(10.0), cs.D(30.0);
         cs.C(0.5), cs.C(10.0), cs.C(30.0)
     ];
-    let b = dvector![cs.B(2.0), 0.0, 0.0];
+    let b = dvector![cs.B(7.0), -cs.D(7.0), -cs.C(7.0)];
     let x = A.lu().solve(&b).expect("Failed to solve system");
     println!("x: {:.4}", x);
 }
